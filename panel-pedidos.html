@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Canasta — Panel de Pedidos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --blanco:#ffffff;
+  --fondo:#f7f4ef;
+  --fondo2:#ede9e1;
+  --negro:#1a1a16;
+  --negro2:#2d2d27;
+  --verde:#2a6b3f;
+  --verde2:#3d8f58;
+  --verde-pale:#e6f2ea;
+  --rojo:#d94f3d;
+  --amarillo:#e8a020;
+  --gris:#8a8878;
+  --gris2:#d4cfc4;
+  --fd:'Syne',sans-serif;
+  --fb:'Manrope',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--fb);background:var(--fondo);color:var(--negro);min-height:100vh;}
+
+/* NAV */
+nav{
+  background:var(--negro);height:64px;padding:0 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.nav-logo{display:flex;align-items:center;gap:10px;}
+.nav-logo-leaf{width:34px;height:34px;background:var(--verde);border-radius:50% 0 50% 50%;display:flex;align-items:center;justify-content:center;font-size:16px;transform:rotate(-45deg);}
+.nav-logo-leaf span{transform:rotate(45deg);display:block;}
+.nav-logo-text{font-family:var(--fd);font-size:19px;color:#fff;font-weight:700;}
+.nav-logo-text em{color:var(--verde2);font-style:normal;}
+.nav-sub{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase;margin-left:6px;padding-left:14px;border-left:1px solid rgba(255,255,255,.15);}
+.refresh-btn{
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;
+  border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;
+  font-family:var(--fb);display:flex;align-items:center;gap:6px;transition:background .2s;
+}
+.refresh-btn:hover{background:rgba(61,143,88,.3);}
+
+/* PW SCREEN */
+.pw-screen{
+  min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.pw-box{background:#fff;border-radius:20px;padding:40px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.08);}
+.pw-box h2{font-family:var(--fd);font-size:26px;margin-bottom:8px;}
+.pw-box p{font-size:13px;color:var(--gris);margin-bottom:24px;}
+.pw-input{width:100%;padding:13px 16px;border:1.5px solid var(--gris2);border-radius:10px;font-size:18px;text-align:center;letter-spacing:.3em;font-family:var(--fb);outline:none;margin-bottom:14px;}
+.pw-input:focus{border-color:var(--verde);}
+.pw-btn{width:100%;background:var(--verde);color:#fff;border:none;border-radius:10px;padding:13px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;font-family:var(--fb);}
+.pw-btn:hover{background:var(--verde2);}
+.pw-err{color:var(--rojo);font-size:12px;margin-top:10px;min-height:16px;}
+
+/* DASHBOARD */
+.dash{display:none;padding:32px;max-width:1200px;margin:0 auto;}
+.dash.active{display:block;}
+.dash-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.dash-title{font-family:var(--fd);font-size:28px;font-weight:800;}
+.dash-sub{font-size:13px;color:var(--gris);}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.stat-label{font-size:12px;color:var(--gris);margin-bottom:6px;}
+.stat-val{font-family:var(--fd);font-size:30px;font-weight:800;}
+.stat-card.nuevo .stat-val{color:var(--rojo);}
+.stat-card.preparando .stat-val{color:var(--amarillo);}
+.stat-card.listo .stat-val{color:var(--verde);}
+
+.filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-btn{
+  padding:8px 18px;border-radius:20px;border:1.5px solid var(--gris2);background:#fff;
+  font-size:12px;font-weight:600;cursor:pointer;color:var(--gris);font-family:var(--fb);transition:all .15s;
+}
+.filter-btn:hover,.filter-btn.active{background:var(--negro);border-color:var(--negro);color:#fff;}
+
+.pedidos-grid{display:flex;flex-direction:column;gap:12px;}
+.pedido-card{background:#fff;border-radius:16px;padding:20px 24px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:4px solid var(--gris2);}
+.pedido-card.estado-nuevo{border-left-color:var(--rojo);}
+.pedido-card.estado-preparando{border-left-color:var(--amarillo);}
+.pedido-card.estado-listo{border-left-color:var(--verde);}
+.pedido-card.estado-entregado{opacity:.55;}
+.pc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.pc-info strong{font-family:var(--fd);font-size:17px;display:block;}
+.pc-info span{font-size:12px;color:var(--gris);}
+.pc-badge{font-size:11px;font-weight:700;padding:5px 14px;border-radius:14px;text-transform:uppercase;letter-spacing:.04em;}
+.badge-nuevo{background:#fde8e4;color:var(--rojo);}
+.badge-preparando{background:#fbf0d9;color:var(--amarillo);}
+.badge-listo{background:var(--verde-pale);color:var(--verde);}
+.badge-entregado{background:var(--fondo2);color:var(--gris);}
+.pc-items{list-style:none;margin:0 0 14px;padding:0;font-size:13px;color:var(--negro2);}
+.pc-items li{padding:4px 0;display:flex;justify-content:space-between;border-bottom:1px dashed var(--fondo2);}
+.pc-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1.5px solid var(--fondo2);}
+.pc-total{font-family:var(--fd);font-size:19px;font-weight:800;}
+.pc-actions{display:flex;gap:8px;}
+.pc-btn{
+  border:none;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;
+  cursor:pointer;font-family:var(--fb);transition:opacity .2s;letter-spacing:.02em;
+}
+.pc-btn-next{background:var(--verde);color:#fff;}
+.pc-btn-next:hover{opacity:.88;}
+.pc-btn-tel{background:var(--fondo2);color:var(--negro);text-decoration:none;display:flex;align-items:center;gap:5px;}
+.empty-msg{text-align:center;padding:60px 20px;color:var(--gris);}
+.empty-msg-icon{font-size:48px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-logo-leaf"><span>🌿</span></div>
+    <span class="nav-logo-text">La <em>Canasta</em></span>
+    <span class="nav-sub">Panel de Pedidos</span>
+  </div>
+  <button class="refresh-btn" onclick="cargarPedidos()" id="refresh-btn">🔄 Actualizar</button>
+</nav>
+
+<!-- ACCESO -->
+<div class="pw-screen" id="pw-screen">
+  <div class="pw-box">
+    <h2>Acceso del Local</h2>
+    <p>Ingresa la contraseña para ver los pedidos</p>
+    <input class="pw-input" type="password" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="pw-btn" onclick="checkPw()">Entrar →</button>
+    <div class="pw-err" id="pw-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash" id="dash">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Pedidos de hoy</div>
+      <div class="dash-sub" id="dash-sub">Cargando...</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card nuevo"><div class="stat-label">Nuevos</div><div class="stat-val" id="count-nuevo">0</div></div>
+    <div class="stat-card preparando"><div class="stat-label">Preparando</div><div class="stat-val" id="count-preparando">0</div></div>
+    <div class="stat-card listo"><div class="stat-label">Listos</div><div class="stat-val" id="count-listo">0</div></div>
+    <div class="stat-card"><div class="stat-label">Total del día</div><div class="stat-val" id="count-total">$0</div></div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="filtrar('todos',this)">Todos</button>
+    <button class="filter-btn" onclick="filtrar('nuevo',this)">Nuevos</button>
+    <button class="filter-btn" onclick="filtrar('preparando',this)">Preparando</button>
+    <button class="filter-btn" onclick="filtrar('listo',this)">Listos</button>
+    <button class="filter-btn" onclick="filtrar('entregado',this)">Entregados</button>
+  </div>
+
+  <div class="pedidos-grid" id="pedidos-grid"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mnieoqxfezvmkvbpaouk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Tt3CVL8FTfmDPMgCLKL8_Q_0HcHR0Dz';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let PANEL_PW = 'canasta2025'; // misma contraseña que el panel admin de productos, cámbiala si quieres una distinta
+let pedidos = [];
+let filtroActivo = 'todos';
+
+function checkPw(){
+  const v = document.getElementById('pw-input').value;
+  const err = document.getElementById('pw-err');
+  if(v === PANEL_PW){
+    document.getElementById('pw-screen').style.display = 'none';
+    document.getElementById('dash').classList.add('active');
+    cargarPedidos();
+  } else {
+    err.textContent = 'Contraseña incorrecta ❌';
+    document.getElementById('pw-input').value = '';
+  }
+}
+
+const estadoConfig = {
+  nuevo:      { label: 'Nuevo',       next: 'preparando', nextLabel: 'Empezar preparación' },
+  preparando: { label: 'Preparando',  next: 'listo',       nextLabel: 'Marcar listo' },
+  listo:      { label: 'Listo',       next: 'entregado',   nextLabel: 'Marcar entregado' },
+  entregado:  { label: 'Entregado',   next: null,          nextLabel: null },
+};
+
+async function cargarPedidos(){
+  const btn = document.getElementById('refresh-btn');
+  btn.textContent = '⏳ Cargando...';
+  const { data, error } = await sb.from('pedidos').select('*').order('created_at', { ascending: false });
+  btn.textContent = '🔄 Actualizar';
+  if(error){ console.error(error); document.getElementById('dash-sub').textContent = 'Error al cargar pedidos'; return; }
+  pedidos = data || [];
+  renderDash();
+}
+
+function renderDash(){
+  const activos = pedidos.filter(p => p.estado !== 'entregado');
+  document.getElementById('dash-sub').textContent = `${activos.length} pedidos activos · ${pedidos.length} en total hoy`;
+  document.getElementById('count-nuevo').textContent = pedidos.filter(p=>p.estado==='nuevo').length;
+  document.getElementById('count-preparando').textContent = pedidos.filter(p=>p.estado==='preparando').length;
+  document.getElementById('count-listo').textContent = pedidos.filter(p=>p.estado==='listo').length;
+  const totalDia = pedidos.reduce((s,p)=>s+(p.total||0),0);
+  document.getElementById('count-total').textContent = '$'+totalDia.toLocaleString();
+  renderLista();
+}
+
+function renderLista(){
+  const grid = document.getElementById('pedidos-grid');
+  let lista = filtroActivo === 'todos' ? pedidos : pedidos.filter(p=>p.estado===filtroActivo);
+  grid.innerHTML = '';
+  if(!lista.length){
+    grid.innerHTML = '<div class="empty-msg"><div class="empty-msg-icon">🧺</div><p>No hay pedidos en esta categoría.</p></div>';
+    return;
+  }
+  lista.forEach(p=>{
+    const cfg = estadoConfig[p.estado] || estadoConfig.nuevo;
+    const fecha = new Date(p.created_at);
+    const hora = fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    const items = (p.productos||[]).map(it=>`<li><span>${it.nombre} x${it.cantidad}</span><span>$${(it.precio_unitario*it.cantidad).toLocaleString()}</span></li>`).join('');
+    const telLink = p.cliente_telefono ? `<a class="pc-btn pc-btn-tel" href="https://wa.me/${p.cliente_telefono.replace(/\D/g,'')}" target="_blank">📞 ${p.cliente_telefono}</a>` : '';
+    const nextBtn = cfg.next ? `<button class="pc-btn pc-btn-next" onclick="avanzarEstado(${p.id})">${cfg.nextLabel} →</button>` : '';
+
+    const card = document.createElement('div');
+    card.className = `pedido-card estado-${p.estado}`;
+    card.innerHTML = `
+      <div class="pc-top">
+        <div class="pc-info">
+          <strong>Pedido #${p.id} — ${p.cliente_nombre}</strong>
+          <span>${hora}</span>
+        </div>
+        <span class="pc-badge badge-${p.estado}">${cfg.label}</span>
+      </div>
+      <ul class="pc-items">${items}</ul>
+      <div class="pc-footer">
+        <span class="pc-total">$${(p.total||0).toLocaleString()}</span>
+        <div class="pc-actions">${telLink}${nextBtn}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+async function avanzarEstado(id){
+  const pedido = pedidos.find(p=>p.id===id);
+  if(!pedido) return;
+  const cfg = estadoConfig[pedido.estado];
+  if(!cfg.next) return;
+  const { error } = await sb.from('pedidos').update({estado: cfg.next}).eq('id', id);
+  if(error){ alert('No se pudo actualizar el pedido'); console.error(error); return; }
+  await cargarPedidos();
+}
+
+function filtrar(estado, btn){
+  filtroActivo = estado;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLista();
+}
+
+// Refresca automáticamente cada 30 segundos si la sesión está activa
+setInterval(()=>{
+  if(document.getElementById('dash').classList.contains('active')) cargarPedidos();
+}, 30000);
+</script>
+</body>
+</html>

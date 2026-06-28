@@ -817,7 +817,7 @@ function updateCart(){
 
 function openCart(){document.getElementById('cart-drawer').classList.add('open');document.getElementById('cart-overlay').classList.add('open');}
 
-/* Guarda el pedido real en la tabla "pedidos" de Supabase */
+/* Guarda el pedido real en la tabla "pedidos" de Supabase y resta el stock */
 async function confirmarPedido(){
   const keys=Object.keys(cart);
   if(!keys.length){ showToast('🧺 Tu canasta está vacía'); return; }
@@ -825,6 +825,20 @@ async function confirmarPedido(){
   const nombre = prompt('¿A nombre de quién es el pedido?');
   if(!nombre) return;
   const telefono = prompt('¿Tu número de teléfono para confirmar entrega?') || '';
+
+  // Antes de nada, verificamos que haya suficiente stock de cada producto
+  for(const k of keys){
+    const {product:p, qty} = cart[k];
+    const { data: actual, error: errStock } = await sb.from('productos').select('stock').eq('id', p.id).single();
+    if(errStock || !actual){
+      showToast('⚠️ No se pudo verificar el stock, intenta de nuevo');
+      return;
+    }
+    if(actual.stock < qty){
+      showToast(`⚠️ Solo quedan ${actual.stock} de "${p.name}"`);
+      return;
+    }
+  }
 
   let total = 0;
   const productosPedido = keys.map(k=>{
@@ -847,10 +861,19 @@ async function confirmarPedido(){
     return;
   }
 
+  // Pedido guardado con éxito -> ahora restamos el stock de cada producto
+  for(const k of keys){
+    const {product:p, qty} = cart[k];
+    const { data: actual } = await sb.from('productos').select('stock').eq('id', p.id).single();
+    const nuevoStock = Math.max(0, (actual?.stock || 0) - qty);
+    await sb.from('productos').update({ stock: nuevoStock }).eq('id', p.id);
+  }
+
   showToast('🎉 ¡Pedido recibido! Te contactamos pronto.');
   cart = {};
   updateCart();
   closeCart();
+  await cargarProductosDesdeSupabase(); // refrescamos el catálogo con el stock actualizado
 }
 function closeCart(){document.getElementById('cart-drawer').classList.remove('open');document.getElementById('cart-overlay').classList.remove('open');}
 function toggleMenu(){const h=document.getElementById('hamburger'),m=document.getElementById('mob-menu');h.classList.toggle('open');m.classList.toggle('open');}
