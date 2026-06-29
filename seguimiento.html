@@ -151,6 +151,20 @@ input:focus{border-color:var(--verde);}
       </div>
 
       <a class="wa-btn" id="r-wa" style="display:none" target="_blank" rel="noopener">💬 Contactar a la tienda</a>
+
+      <!-- Botón cancelar — solo visible cuando el pedido está en "nuevo" -->
+      <div id="r-cancelar-wrap" style="display:none;margin-top:14px;">
+        <button class="link-otro" style="border-color:#f5c6bf;color:var(--rojo)" onclick="confirmarCancelacion()">✕ Cancelar mi pedido</button>
+      </div>
+      <!-- Confirmación cancelación -->
+      <div id="r-cancelar-confirm" style="display:none;background:#fdecea;border:1px solid #f5c6bf;border-radius:12px;padding:16px;margin-top:14px;text-align:center;">
+        <div style="font-size:13px;font-weight:600;color:var(--rojo);margin-bottom:12px;">¿Seguro que quieres cancelar tu pedido?</div>
+        <div style="display:flex;gap:8px;">
+          <button class="link-otro" style="flex:1;margin:0" onclick="ocultarConfirmCancelacion()">No, regresar</button>
+          <button class="btn" style="flex:1;background:var(--rojo);margin:0" onclick="cancelarPedido()">Sí, cancelar</button>
+        </div>
+      </div>
+
       <div class="live" id="r-live"><span class="live-dot"></span> Se actualiza solo cada 15 segundos</div>
       <button class="link-otro" onclick="reiniciar()">Consultar otro pedido</button>
     </div>
@@ -298,11 +312,57 @@ function pintarPedido(p){
     wa.style.display = 'block';
   }
 
+  // Botón cancelar: solo visible si el pedido está en "nuevo" (aún no se prepara)
+  document.getElementById('r-cancelar-wrap').style.display = p.estado === 'nuevo' ? 'block' : 'none';
+  document.getElementById('r-cancelar-confirm').style.display = 'none';
+
   // Si ya se entregó, dejamos de refrescar
   if(p.estado === 'entregado'){
     detenerAutoRefresh();
     document.getElementById('r-live').innerHTML = '🎉 Pedido completado';
   }
+}
+
+function confirmarCancelacion(){
+  document.getElementById('r-cancelar-wrap').style.display = 'none';
+  document.getElementById('r-cancelar-confirm').style.display = 'block';
+}
+function ocultarConfirmCancelacion(){
+  document.getElementById('r-cancelar-confirm').style.display = 'none';
+  document.getElementById('r-cancelar-wrap').style.display = 'block';
+}
+async function cancelarPedido(){
+  if(!pedidoActivo) return;
+  const btn = document.querySelector('#r-cancelar-confirm .btn');
+  btn.disabled = true; btn.textContent = 'Cancelando...';
+
+  // Verificamos que el pedido siga en "nuevo" antes de cancelar (por si el dueño lo avanzó justo ahora)
+  const { data, error } = await sb.from('pedidos').select('estado, productos').eq('id', pedidoActivo.id).single();
+  if(error || !data){ btn.disabled=false; btn.textContent='Sí, cancelar'; return; }
+
+  if(data.estado !== 'nuevo'){
+    document.getElementById('r-cancelar-confirm').style.display = 'none';
+    alert('Tu pedido ya está siendo preparado, ya no es posible cancelarlo. Escríbenos por WhatsApp si tienes algún problema.');
+    await cargarPedido(pedidoActivo.id, pedidoActivo.tel4);
+    return;
+  }
+
+  // Cancelamos el pedido
+  await sb.from('pedidos').update({ estado: 'cancelado' }).eq('id', pedidoActivo.id);
+
+  // Regresamos el stock de cada producto
+  for(const it of (data.productos || [])){
+    const { data: prod } = await sb.from('productos').select('stock').eq('id', it.id).single();
+    if(prod) await sb.from('productos').update({ stock: prod.stock + it.cantidad }).eq('id', it.id);
+  }
+
+  detenerAutoRefresh();
+  document.getElementById('r-cancelar-confirm').style.display = 'none';
+  document.getElementById('r-emoji').textContent = '❌';
+  document.getElementById('r-title').textContent = 'Pedido cancelado';
+  document.getElementById('r-sub').textContent = 'Tu pedido fue cancelado. Si fue un error, contáctanos por WhatsApp.';
+  document.getElementById('r-live').innerHTML = 'Pedido cancelado';
+  document.getElementById('r-cancelar-wrap').style.display = 'none';
 }
 
 function iniciarAutoRefresh(){
