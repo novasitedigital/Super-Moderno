@@ -558,16 +558,16 @@ footer{background:var(--negro2);padding:56px 40px 0;}
       </div>
       <p class="foot-desc">Tu mercado de barrio con los mejores productos frescos. Calidad y servicio desde 2015.</p>
     </div>
-    <div class="foot-col"><h4>Tienda</h4><a href="#productos">Todos los productos</a><a href="#productos">Ofertas del día</a><a href="#servicios">Servicios</a><a href="#contacto">Contacto</a></div>
+    <div class="foot-col"><h4>Tienda</h4><a href="#productos">Todos los productos</a><a href="#productos">Ofertas del día</a><a href="seguimiento.html">Seguir mi pedido</a><a href="#servicios">Servicios</a><a href="#contacto">Contacto</a></div>
     <div class="foot-col"><h4>Horario</h4><a href="#">Lun–Sáb: 7:00–21:00</a><a href="#">Domingo: 8:00–15:00</a><a href="#">Días festivos: 9:00–14:00</a></div>
-    <div class="foot-col"><h4>Contacto</h4><a href="https://wa.me/" target="_blank">WhatsApp</a><a href="https://www.facebook.com/NovaSiteDigital/" target="_blank">Facebook</a><a href="https://instagram.com" target="_blank">Instagram</a></div>
+    <div class="foot-col"><h4>Contacto</h4><a class="wa-link" href="https://wa.me/" target="_blank">WhatsApp</a><a href="https://www.facebook.com/NovaSiteDigital/" target="_blank">Facebook</a><a href="https://instagram.com" target="_blank">Instagram</a></div>
   </div>
   <div class="foot-bottom">
     <p>© 2025 La Canasta. Todos los derechos reservados.</p>
     <div class="foot-soc">
       <a class="fsoc" href="https://www.facebook.com/NovaSiteDigital/" target="_blank">fb</a>
       <a class="fsoc" href="https://instagram.com" target="_blank">ig</a>
-      <a class="fsoc" href="https://wa.me/" target="_blank">wa</a>
+      <a class="fsoc wa-link" href="https://wa.me/" target="_blank">wa</a>
     </div>
   </div>
 </footer>
@@ -661,7 +661,11 @@ footer{background:var(--negro2);padding:56px 40px 0;}
         <div class="track-step" id="step-camino"><div class="ts-dot"></div><div class="ts-label">En camino</div></div>
         <div class="track-step" id="step-entregado"><div class="ts-dot"></div><div class="ts-label">Entregado</div></div>
       </div>
-      <button class="ab" style="margin-top:24px" onclick="cerrarTracking()">Entendido</button>
+      <a href="seguimiento.html" class="ab" style="margin-top:24px;display:block;text-align:center;text-decoration:none">📍 Ver seguimiento de mi pedido</a>
+      <div id="track-wa-msg" style="font-size:12.5px;color:var(--gris);margin-top:16px;line-height:1.5;display:none">
+        Para cualquier percance, contáctanos por <a id="track-wa-link" href="#" target="_blank" rel="noopener" style="color:var(--verde);font-weight:700;text-decoration:none">WhatsApp</a> 💬
+      </div>
+      <button class="cart-btn-cont" style="margin-top:10px" onclick="cerrarTracking()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -675,6 +679,10 @@ footer{background:var(--negro2);padding:56px 40px 0;}
 const SUPABASE_URL = 'https://mnieoqxfezvmkvbpaouk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Tt3CVL8FTfmDPMgCLKL8_Q_0HcHR0Dz';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ⬇️ WhatsApp de la tienda (con 52 al inicio, sin espacios ni guiones). Ej: '5213312345678'
+// Déjalo '' (vacío) si todavía no lo tienes; el mensaje de contacto se mostrará solo cuando lo llenes.
+const WHATSAPP_TIENDA = '';
 
 /* CATALOG ahora se llena desde Supabase, no de una lista fija */
 let catalog=[];
@@ -911,6 +919,12 @@ async function confirmarPedido(){
 function mostrarTracking(idPedido){
   document.getElementById('track-num').textContent = `Pedido #${idPedido}`;
   localStorage.setItem('ultimoPedidoId', idPedido);
+  // Mensaje de contacto por WhatsApp (solo aparece si configuraste WHATSAPP_TIENDA arriba)
+  if(WHATSAPP_TIENDA){
+    const msg = encodeURIComponent(`Hola, tengo una duda sobre mi pedido #${idPedido} de La Canasta.`);
+    document.getElementById('track-wa-link').href = `https://wa.me/${WHATSAPP_TIENDA}?text=${msg}`;
+    document.getElementById('track-wa-msg').style.display = 'block';
+  }
   document.getElementById('track-overlay').classList.add('open');
 }
 function cerrarTracking(){document.getElementById('track-overlay').classList.remove('open');}
@@ -927,6 +941,14 @@ function toggleMenu(){const h=document.getElementById('hamburger'),m=document.ge
 function closeMob(){document.getElementById('hamburger').classList.remove('open');document.getElementById('mob-menu').classList.remove('open');}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+/* Aplica el WhatsApp de la tienda a los enlaces del footer (solo si está configurado arriba) */
+function aplicarWhatsAppFooter(){
+  if(!WHATSAPP_TIENDA) return;
+  const msg = encodeURIComponent('Hola, les escribo desde su tienda en línea La Canasta.');
+  document.querySelectorAll('.wa-link').forEach(a=>{ a.href = `https://wa.me/${WHATSAPP_TIENDA}?text=${msg}`; });
+}
+aplicarWhatsAppFooter();
 
 /* Al cargar la página, traemos los productos reales de Supabase */
 cargarProductosDesdeSupabase();
