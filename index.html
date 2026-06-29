@@ -775,13 +775,27 @@ function searchProds(){
 
 function addToCart(id){
   const p=catalog.find(x=>x.id===id);if(!p)return;
-  if(!cart[id])cart[id]={product:p,qty:1};
-  else cart[id].qty++;
+  if(!cart[id]) cart[id]={product:p,qty:0};
+  if(cart[id].qty >= p.stock){
+    showToast(`🚫 Solo hay ${p.stock} disponibles de "${p.name}"`);
+    return;
+  }
+  cart[id].qty++;
   updateCart();
   showToast(`🛒 ${p.name} agregado`);
 }
 
-function changeQty(id,d){if(!cart[id])return;cart[id].qty+=d;if(cart[id].qty<=0)delete cart[id];updateCart();}
+function changeQty(id,d){
+  if(!cart[id])return;
+  const p=cart[id].product;
+  if(d>0 && cart[id].qty>=p.stock){
+    showToast(`🚫 Solo hay ${p.stock} disponibles de "${p.name}"`);
+    return;
+  }
+  cart[id].qty+=d;
+  if(cart[id].qty<=0)delete cart[id];
+  updateCart();
+}
 function removeItem(id){delete cart[id];updateCart();}
 
 function updateCart(){
