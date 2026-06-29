@@ -362,6 +362,32 @@ footer{background:var(--negro2);padding:56px 40px 0;}
 .pw-go:hover{background:var(--verde2);}
 .pw-err{color:var(--rojo);font-size:12px;margin-top:8px;min-height:18px;}
 
+/* CHECKOUT - PAGO */
+.pago-btn{
+  padding:14px;border:1.5px solid var(--gris2);border-radius:10px;background:#fff;
+  font-size:13px;font-weight:600;cursor:pointer;font-family:var(--fb);color:var(--gris);
+  transition:all .15s;
+}
+.pago-btn.active{border-color:var(--verde);background:var(--verde-pale);color:var(--verde);}
+.pago-btn:hover{border-color:var(--verde);}
+
+/* TRACKING STEPS */
+.track-steps{display:flex;justify-content:space-between;align-items:flex-start;padding:0 6px;}
+.track-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;}
+.track-step::before{
+  content:'';position:absolute;top:7px;left:-50%;width:100%;height:2px;
+  background:var(--gris2);z-index:0;
+}
+.track-step:first-child::before{display:none;}
+.track-step.active::before,.track-step.done::before{background:var(--verde);}
+.ts-dot{
+  width:16px;height:16px;border-radius:50%;background:var(--gris2);
+  position:relative;z-index:1;border:3px solid var(--blanco);
+}
+.track-step.active .ts-dot,.track-step.done .ts-dot{background:var(--verde);}
+.ts-label{font-size:11px;color:var(--gris);text-align:center;}
+.track-step.active .ts-label,.track-step.done .ts-label{color:var(--verde);font-weight:700;}
+
 /* RESPONSIVE */
 @media(max-width:1024px){
   nav,footer{padding-left:24px;padding-right:24px;}
@@ -419,9 +445,6 @@ footer{background:var(--negro2);padding:56px 40px 0;}
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" placeholder="Buscar producto…" id="search-input" oninput="searchProds()">
     </div>
-    <button class="nav-admin-btn" onclick="openAdmin()" title="Admin">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    </button>
     <button class="cart-fab" onclick="openCart()">
       🛒 <span>Canasta</span>
       <span class="cn" id="cart-num">0</span>
@@ -562,119 +585,83 @@ footer{background:var(--negro2);padding:56px 40px 0;}
   <div id="cart-foot" style="display:none">
     <div class="cart-foot">
       <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-val" id="cart-total">$0</span></div>
-      <button class="cart-btn-checkout" onclick="confirmarPedido()">Finalizar pedido →</button>
+      <button class="cart-btn-checkout" onclick="abrirCheckout()">Finalizar pedido →</button>
       <button class="cart-btn-cont" onclick="closeCart()">Seguir comprando</button>
     </div>
   </div>
 </div>
 
-<!-- ADMIN MODAL -->
-<div class="modal-overlay" id="admin-overlay" onclick="if(event.target===this)closeAdmin()">
-  <div class="modal-box">
+<!-- CHECKOUT MODAL -->
+<div class="modal-overlay" id="checkout-overlay" onclick="if(event.target===this)cerrarCheckout()">
+  <div class="modal-box" style="max-width:520px">
     <div class="modal-head">
-      <span class="modal-head-title">⚙️ Panel Admin</span>
-      <button class="modal-close" onclick="closeAdmin()">✕</button>
+      <span class="modal-head-title">📦 Datos de entrega</span>
+      <button class="modal-close" onclick="cerrarCheckout()">✕</button>
     </div>
-    <div class="modal-body" id="admin-body">
-      <!-- PW -->
-      <div class="pw-wrap" id="pw-screen">
-        <h3>Acceso Admin</h3>
-        <p>Ingresa la contraseña para gestionar la tienda</p>
-        <input class="pw-inp" type="password" id="pw-inp" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
-        <button class="pw-go" onclick="checkPw()">Entrar →</button>
-        <div class="pw-err" id="pw-err"></div>
+    <div class="modal-body">
+      <div class="af"><label>Nombre completo</label><input type="text" id="co-nombre" placeholder="¿A nombre de quién es el pedido?"></div>
+      <div class="af"><label>Teléfono</label><input type="tel" id="co-telefono" placeholder="10 dígitos"></div>
+
+      <div class="sg-title" style="margin-top:18px">Dirección de entrega</div>
+      <div class="af"><label>Calle</label><input type="text" id="co-calle" placeholder="Nombre de la calle"></div>
+      <div class="af"><label>Condominio / Colonia (si aplica)</label><input type="text" id="co-condominio" placeholder="Opcional"></div>
+      <div class="ar2">
+        <div class="af"><label>Número exterior</label><input type="text" id="co-numext" placeholder="123"></div>
+        <div class="af"><label>Número interior (si aplica)</label><input type="text" id="co-numint" placeholder="Opcional"></div>
       </div>
-      <!-- PANEL -->
-      <div id="admin-panel" style="display:none">
-        <div class="a-tabs">
-          <button class="a-tab active" onclick="aTab('add',this)">+ Agregar</button>
-          <button class="a-tab" onclick="aTab('list',this)">Editar productos</button>
-          <button class="a-tab" onclick="aTab('cfg',this)">Configuración</button>
-          <button class="a-tab" onclick="aTab('pw2',this)">Contraseña</button>
-        </div>
-        <!-- ADD -->
-        <div class="a-sec active" id="tab-add">
-          <div class="af"><label>Imagen</label>
-            <div class="img-prev" id="add-ip" onclick="document.getElementById('add-file').click()">📷</div>
-            <input type="file" id="add-file" accept="image/*" style="display:none" onchange="pImg(this,'add-ip')">
-          </div>
-          <div class="ar2">
-            <div class="af"><label>Nombre</label><input type="text" id="add-n" placeholder="Ej: Manzana Roja"></div>
-            <div class="af"><label>Categoría</label>
-              <select id="add-c">
-                <option value="frutas">Frutas</option><option value="verduras">Verduras</option>
-                <option value="lacteos">Lácteos</option><option value="botanas">Botanas</option>
-                <option value="bebidas">Bebidas</option><option value="limpieza">Limpieza</option>
-              </select>
-            </div>
-          </div>
-          <div class="ar2">
-            <div class="af"><label>Precio ($)</label><input type="number" id="add-p" placeholder="25"></div>
-            <div class="af"><label>Precio anterior ($)</label><input type="number" id="add-op" placeholder="Opcional"></div>
-          </div>
-          <div class="ar2">
-            <div class="af"><label>Unidad</label><input type="text" id="add-u" placeholder="kg, pza, lt…"></div>
-            <div class="af"><label>Badge</label>
-              <select id="add-b"><option value="">Ninguno</option><option value="oferta">🔥 Oferta</option><option value="nuevo">✨ Nuevo</option><option value="popular">⭐ Popular</option></select>
-            </div>
-          </div>
-          <button class="ab" onclick="addProd()">Agregar producto</button>
-        </div>
-        <!-- LIST -->
-        <div class="a-sec" id="tab-list"><div class="ilist" id="prod-admin-list"></div></div>
-        <!-- EDIT -->
-        <div class="a-sec" id="tab-edit">
-          <button onclick="aTab('list',document.querySelectorAll('.a-tab')[1])" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--gris);margin-bottom:14px;font-family:var(--fb);">← Volver</button>
-          <div class="af"><label>Imagen</label>
-            <div class="img-prev" id="edit-ip" onclick="document.getElementById('edit-file').click()">📷</div>
-            <input type="file" id="edit-file" accept="image/*" style="display:none" onchange="pImg(this,'edit-ip')">
-          </div>
-          <div class="ar2">
-            <div class="af"><label>Nombre</label><input type="text" id="edit-n"></div>
-            <div class="af"><label>Categoría</label>
-              <select id="edit-c"><option value="frutas">Frutas</option><option value="verduras">Verduras</option><option value="lacteos">Lácteos</option><option value="botanas">Botanas</option><option value="bebidas">Bebidas</option><option value="limpieza">Limpieza</option></select>
-            </div>
-          </div>
-          <div class="ar2">
-            <div class="af"><label>Precio ($)</label><input type="number" id="edit-p"></div>
-            <div class="af"><label>Precio anterior ($)</label><input type="number" id="edit-op"></div>
-          </div>
-          <div class="ar2">
-            <div class="af"><label>Unidad</label><input type="text" id="edit-u"></div>
-            <div class="af"><label>Badge</label><select id="edit-b"><option value="">Ninguno</option><option value="oferta">🔥 Oferta</option><option value="nuevo">✨ Nuevo</option><option value="popular">⭐ Popular</option></select></div>
-          </div>
-          <input type="hidden" id="edit-id">
-          <button class="ab" onclick="saveProd()">Guardar cambios</button>
-          <button class="ab red" onclick="delProd()" style="margin-top:8px">Eliminar producto</button>
-        </div>
-        <!-- CFG -->
-        <div class="a-sec" id="tab-cfg">
-          <div class="sg"><div class="sg-title">Tienda</div>
-            <div class="sr"><label>Nombre</label><input type="text" value="La Canasta"></div>
-            <div class="sr"><label>Dirección</label><input type="text" value="Calle Principal 123"></div>
-            <div class="sr"><label>Teléfono</label><input type="text" value="+52 33 1234 5678"></div>
-          </div>
-          <div class="sg"><div class="sg-title">Horarios</div>
-            <div class="sr"><label>Lun–Sáb</label><input type="text" value="7:00 – 21:00"></div>
-            <div class="sr"><label>Domingo</label><input type="text" value="8:00 – 15:00"></div>
-          </div>
-          <div class="sg"><div class="sg-title">Funciones</div>
-            <div class="sr"><label>Carrito activo</label><label class="toggle"><input type="checkbox" checked><span class="tsl"></span></label></div>
-            <div class="sr"><label>Envío a domicilio</label><label class="toggle"><input type="checkbox" checked><span class="tsl"></span></label></div>
-            <div class="sr"><label>Banner de oferta</label><label class="toggle"><input type="checkbox" checked><span class="tsl"></span></label></div>
-          </div>
-          <button class="ab" onclick="showToast('✅ Configuración guardada');closeAdmin()">Guardar configuración</button>
-        </div>
-        <!-- PW -->
-        <div class="a-sec" id="tab-pw2">
-          <p style="padding:12px;background:var(--verde-pale);border-left:3px solid var(--verde);border-radius:8px;font-size:13px;color:var(--verde);margin-bottom:18px;">Contraseña por defecto: <strong>canasta2025</strong></p>
-          <div class="af"><label>Contraseña actual</label><input type="password" id="p-cur" placeholder="••••••"></div>
-          <div class="af"><label>Nueva contraseña</label><input type="password" id="p-new" placeholder="••••••"></div>
-          <div class="af"><label>Confirmar</label><input type="password" id="p-con" placeholder="••••••"></div>
-          <div class="pw-err" id="p-err"></div>
-          <button class="ab" onclick="changePw()">Actualizar contraseña</button>
+      <div class="af"><label>Descripción / referencia</label><textarea id="co-referencia" placeholder="Ej: casa azul, portón negro, frente a la tienda..." style="height:60px"></textarea></div>
+
+      <div class="sg-title" style="margin-top:18px">Método de pago</div>
+      <div class="ar2">
+        <button type="button" class="pago-btn active" id="pago-efectivo-btn" onclick="seleccionarPago('efectivo')">💵 Efectivo</button>
+        <button type="button" class="pago-btn" id="pago-tarjeta-btn" onclick="seleccionarPago('tarjeta')">💳 Tarjeta</button>
+      </div>
+
+      <div id="pago-efectivo-campos">
+        <div class="af" style="margin-top:12px"><label>¿Con qué billete pagarás?</label>
+          <select id="co-billete">
+            <option value="exacto">Pago exacto</option>
+            <option value="100">Billete de $100</option>
+            <option value="200">Billete de $200</option>
+            <option value="500">Billete de $500</option>
+            <option value="1000">Billete de $1000</option>
+          </select>
         </div>
       </div>
+
+      <div id="pago-tarjeta-campos" style="display:none">
+        <div class="af" style="margin-top:12px"><label>Tipo de tarjeta</label>
+          <select id="co-tipo-tarjeta">
+            <option value="debito">Débito</option>
+            <option value="credito">Crédito</option>
+          </select>
+        </div>
+        <p style="font-size:12px;color:var(--gris);margin-top:6px">El cobro se realiza de forma manual al momento de la entrega.</p>
+      </div>
+
+      <button class="ab" style="margin-top:20px" onclick="confirmarPedido()">Confirmar pedido →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SEGUIMIENTO MODAL -->
+<div class="modal-overlay" id="track-overlay" onclick="if(event.target===this)cerrarTracking()">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-head">
+      <span class="modal-head-title">📍 Tu pedido</span>
+      <button class="modal-close" onclick="cerrarTracking()">✕</button>
+    </div>
+    <div class="modal-body" id="track-body" style="text-align:center;padding:30px 22px">
+      <div style="font-size:48px;margin-bottom:12px">🎉</div>
+      <div style="font-family:var(--fd);font-size:22px;font-weight:800;margin-bottom:6px" id="track-num"></div>
+      <div style="font-size:13px;color:var(--gris);margin-bottom:24px">Guarda este número para dar seguimiento a tu pedido</div>
+      <div class="track-steps">
+        <div class="track-step active" id="step-nuevo"><div class="ts-dot"></div><div class="ts-label">Pendiente</div></div>
+        <div class="track-step" id="step-preparando"><div class="ts-dot"></div><div class="ts-label">Preparando</div></div>
+        <div class="track-step" id="step-camino"><div class="ts-dot"></div><div class="ts-label">En camino</div></div>
+        <div class="track-step" id="step-entregado"><div class="ts-dot"></div><div class="ts-label">Entregado</div></div>
+      </div>
+      <button class="ab" style="margin-top:24px" onclick="cerrarTracking()">Entendido</button>
     </div>
   </div>
 </div>
@@ -692,7 +679,6 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 /* CATALOG ahora se llena desde Supabase, no de una lista fija */
 let catalog=[];
 let cart={},activeFilter='todo',activeSort='default',searchTerm='',nextId=100;
-let ADMIN_PW='canasta2025',authed=false;
 
 /* Carga los productos reales desde la tabla "productos" en Supabase */
 async function cargarProductosDesdeSupabase(){
@@ -817,16 +803,56 @@ function updateCart(){
 
 function openCart(){document.getElementById('cart-drawer').classList.add('open');document.getElementById('cart-overlay').classList.add('open');}
 
+/* ── CHECKOUT MODAL ── */
+let metodoPagoSeleccionado = 'efectivo';
+
+function abrirCheckout(){
+  const keys=Object.keys(cart);
+  if(!keys.length){ showToast('🧺 Tu canasta está vacía'); return; }
+  document.getElementById('checkout-overlay').classList.add('open');
+}
+function cerrarCheckout(){document.getElementById('checkout-overlay').classList.remove('open');}
+
+function seleccionarPago(metodo){
+  metodoPagoSeleccionado = metodo;
+  document.getElementById('pago-efectivo-btn').classList.toggle('active', metodo==='efectivo');
+  document.getElementById('pago-tarjeta-btn').classList.toggle('active', metodo==='tarjeta');
+  document.getElementById('pago-efectivo-campos').style.display = metodo==='efectivo' ? 'block' : 'none';
+  document.getElementById('pago-tarjeta-campos').style.display = metodo==='tarjeta' ? 'block' : 'none';
+}
+
 /* Guarda el pedido real en la tabla "pedidos" de Supabase y resta el stock */
 async function confirmarPedido(){
   const keys=Object.keys(cart);
   if(!keys.length){ showToast('🧺 Tu canasta está vacía'); return; }
 
-  const nombre = prompt('¿A nombre de quién es el pedido?');
-  if(!nombre) return;
-  const telefono = prompt('¿Tu número de teléfono para confirmar entrega?') || '';
+  const nombre = document.getElementById('co-nombre').value.trim();
+  const telefono = document.getElementById('co-telefono').value.trim();
+  const calle = document.getElementById('co-calle').value.trim();
+  const numext = document.getElementById('co-numext').value.trim();
 
-  // Antes de nada, verificamos que haya suficiente stock de cada producto
+  if(!nombre || !telefono || !calle || !numext){
+    showToast('⚠️ Completa nombre, teléfono, calle y número exterior');
+    return;
+  }
+
+  const condominio = document.getElementById('co-condominio').value.trim();
+  const numint = document.getElementById('co-numint').value.trim();
+  const referencia = document.getElementById('co-referencia').value.trim();
+
+  const direccionCompleta = {
+    calle, numero_exterior: numext, numero_interior: numint || null,
+    condominio: condominio || null, referencia: referencia || null
+  };
+
+  let datosPago = { metodo: metodoPagoSeleccionado };
+  if(metodoPagoSeleccionado === 'efectivo'){
+    datosPago.billete = document.getElementById('co-billete').value;
+  } else {
+    datosPago.tipo_tarjeta = document.getElementById('co-tipo-tarjeta').value;
+  }
+
+  // Verificamos que haya suficiente stock de cada producto antes de confirmar
   for(const k of keys){
     const {product:p, qty} = cart[k];
     const { data: actual, error: errStock } = await sb.from('productos').select('stock').eq('id', p.id).single();
@@ -847,13 +873,15 @@ async function confirmarPedido(){
     return { id: p.id, nombre: p.name, cantidad: qty, precio_unitario: p.price };
   });
 
-  const { error } = await sb.from('pedidos').insert({
+  const { data: pedidoCreado, error } = await sb.from('pedidos').insert({
     cliente_nombre: nombre,
     cliente_telefono: telefono,
+    direccion: direccionCompleta,
+    metodo_pago: datosPago,
     productos: productosPedido,
     total: total,
     estado: 'nuevo'
-  });
+  }).select().single();
 
   if(error){
     showToast('⚠️ No se pudo enviar el pedido, intenta de nuevo');
@@ -869,119 +897,34 @@ async function confirmarPedido(){
     await sb.from('productos').update({ stock: nuevoStock }).eq('id', p.id);
   }
 
-  showToast('🎉 ¡Pedido recibido! Te contactamos pronto.');
   cart = {};
   updateCart();
+  cerrarCheckout();
   closeCart();
   await cargarProductosDesdeSupabase(); // refrescamos el catálogo con el stock actualizado
+
+  // Mostramos el seguimiento del pedido con su número
+  mostrarTracking(pedidoCreado.id);
 }
+
+/* ── SEGUIMIENTO DEL PEDIDO ── */
+function mostrarTracking(idPedido){
+  document.getElementById('track-num').textContent = `Pedido #${idPedido}`;
+  localStorage.setItem('ultimoPedidoId', idPedido);
+  document.getElementById('track-overlay').classList.add('open');
+}
+function cerrarTracking(){document.getElementById('track-overlay').classList.remove('open');}
+
+/* Permite consultar el estado actual de un pedido por su número */
+async function consultarPedido(idPedido){
+  const { data, error } = await sb.from('pedidos').select('estado').eq('id', idPedido).single();
+  if(error || !data) return null;
+  return data.estado;
+}
+
 function closeCart(){document.getElementById('cart-drawer').classList.remove('open');document.getElementById('cart-overlay').classList.remove('open');}
 function toggleMenu(){const h=document.getElementById('hamburger'),m=document.getElementById('mob-menu');h.classList.toggle('open');m.classList.toggle('open');}
 function closeMob(){document.getElementById('hamburger').classList.remove('open');document.getElementById('mob-menu').classList.remove('open');}
-
-function openAdmin(){document.getElementById('admin-overlay').classList.add('open');if(!authed){document.getElementById('pw-screen').style.display='block';document.getElementById('admin-panel').style.display='none';document.getElementById('pw-inp').value='';document.getElementById('pw-err').style.display='none';}}
-function closeAdmin(){document.getElementById('admin-overlay').classList.remove('open');}
-
-function checkPw(){
-  const v=document.getElementById('pw-inp').value,err=document.getElementById('pw-err');
-  if(v===ADMIN_PW){authed=true;document.getElementById('pw-screen').style.display='none';document.getElementById('admin-panel').style.display='block';renderAdminList();}
-  else{err.textContent='Contraseña incorrecta ❌';err.style.display='block';document.getElementById('pw-inp').value='';}
-}
-
-function aTab(name,btn){
-  document.querySelectorAll('.a-tab').forEach(t=>t.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  document.querySelectorAll('.a-sec').forEach(s=>s.classList.remove('active'));
-  const s=document.getElementById('tab-'+name);if(s)s.classList.add('active');
-  if(name==='list')renderAdminList();
-}
-
-function pImg(input,prevId){
-  const f=input.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=e=>{const p=document.getElementById(prevId);p.querySelectorAll('img').forEach(i=>i.remove());const img=document.createElement('img');img.src=e.target.result;p.appendChild(img);p.dataset.img=e.target.result;};
-  r.readAsDataURL(f);
-}
-
-async function addProd(){
-  const n=document.getElementById('add-n').value.trim(),p=parseFloat(document.getElementById('add-p').value);
-  if(!n||!p){showToast('⚠️ Nombre y precio requeridos');return;}
-  const imgData=document.getElementById('add-ip').dataset.img||'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80&auto=format&fit=crop';
-  const nuevo = {
-    nombre: n,
-    categoria: document.getElementById('add-c').value,
-    unidad: document.getElementById('add-u').value||'pza',
-    precio: p,
-    stock: 100,
-    badge: document.getElementById('add-b').value,
-    imagen_url: imgData
-  };
-  const { error } = await sb.from('productos').insert(nuevo);
-  if(error){ showToast('⚠️ Error al guardar: '+error.message); return; }
-  await cargarProductosDesdeSupabase();
-  ['add-n','add-p','add-op','add-u'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('add-b').value='';
-  const ip=document.getElementById('add-ip');ip.querySelectorAll('img').forEach(i=>i.remove());delete ip.dataset.img;
-  showToast('✅ Producto agregado');closeAdmin();
-}
-
-function renderAdminList(){
-  const list=document.getElementById('prod-admin-list');list.innerHTML='';
-  catalog.forEach(p=>{
-    const div=document.createElement('div');div.className='irow';
-    div.innerHTML=`<div class="irow-img"><img src="${p.img}" alt="${p.name}"></div>
-      <div class="irow-info"><strong>${p.name}</strong><span>$${p.price} · ${p.cat}</span></div>
-      <div class="rb"><button class="be" onclick="openEdit(${p.id})">Editar</button></div>`;
-    list.appendChild(div);
-  });
-}
-
-function openEdit(id){
-  const p=catalog.find(x=>x.id===id);if(!p)return;
-  document.getElementById('edit-id').value=id;
-  document.getElementById('edit-n').value=p.name;
-  document.getElementById('edit-c').value=p.cat;
-  document.getElementById('edit-p').value=p.price;
-  document.getElementById('edit-op').value=p.oldPrice||'';
-  document.getElementById('edit-u').value=p.unit;
-  document.getElementById('edit-b').value=p.badge||'';
-  const ip=document.getElementById('edit-ip');ip.querySelectorAll('img').forEach(i=>i.remove());
-  const img=document.createElement('img');img.src=p.img;ip.appendChild(img);ip.dataset.img=p.img;
-  aTab('edit',null);
-}
-
-async function saveProd(){
-  const id=parseInt(document.getElementById('edit-id').value);
-  const cambios = {
-    nombre: document.getElementById('edit-n').value,
-    categoria: document.getElementById('edit-c').value,
-    precio: parseFloat(document.getElementById('edit-p').value),
-    unidad: document.getElementById('edit-u').value,
-    badge: document.getElementById('edit-b').value,
-    imagen_url: document.getElementById('edit-ip').dataset.img || catalog.find(x=>x.id===id)?.img
-  };
-  const { error } = await sb.from('productos').update(cambios).eq('id', id);
-  if(error){ showToast('⚠️ Error al actualizar: '+error.message); return; }
-  await cargarProductosDesdeSupabase();
-  showToast('✅ Producto actualizado');aTab('list',document.querySelectorAll('.a-tab')[1]);
-}
-
-async function delProd(){
-  const id=parseInt(document.getElementById('edit-id').value);
-  if(!confirm('¿Eliminar este producto?'))return;
-  const { error } = await sb.from('productos').delete().eq('id', id);
-  if(error){ showToast('⚠️ Error al eliminar: '+error.message); return; }
-  await cargarProductosDesdeSupabase();
-  showToast('Producto eliminado');aTab('list',document.querySelectorAll('.a-tab')[1]);
-}
-
-function changePw(){
-  const cur=document.getElementById('p-cur').value,nw=document.getElementById('p-new').value,con=document.getElementById('p-con').value,err=document.getElementById('p-err');
-  if(cur!==ADMIN_PW){err.textContent='Contraseña actual incorrecta';err.style.display='block';return;}
-  if(nw.length<4){err.textContent='Mínimo 4 caracteres';err.style.display='block';return;}
-  if(nw!==con){err.textContent='Las contraseñas no coinciden';err.style.display='block';return;}
-  ADMIN_PW=nw;err.style.display='none';['p-cur','p-new','p-con'].forEach(id=>document.getElementById(id).value='');showToast('✅ Contraseña actualizada');
-}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 

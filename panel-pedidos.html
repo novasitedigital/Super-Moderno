@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>La Canasta — Panel de Pedidos</title>
+<title>La Canasta — Panel Operativo</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
@@ -28,27 +28,32 @@ body{font-family:var(--fb);background:var(--fondo);color:var(--negro);min-height
 
 /* NAV */
 nav{
-  background:var(--negro);height:64px;padding:0 32px;
+  background:var(--negro);height:60px;padding:0 20px;
   display:flex;align-items:center;justify-content:space-between;
-  position:sticky;top:0;z-index:50;
+  position:sticky;top:0;z-index:50;flex-wrap:wrap;gap:8px;
 }
 .nav-logo{display:flex;align-items:center;gap:10px;}
-.nav-logo-leaf{width:34px;height:34px;background:var(--verde);border-radius:50% 0 50% 50%;display:flex;align-items:center;justify-content:center;font-size:16px;transform:rotate(-45deg);}
+.nav-logo-leaf{width:30px;height:30px;background:var(--verde);border-radius:50% 0 50% 50%;display:flex;align-items:center;justify-content:center;font-size:14px;transform:rotate(-45deg);flex-shrink:0;}
 .nav-logo-leaf span{transform:rotate(45deg);display:block;}
-.nav-logo-text{font-family:var(--fd);font-size:19px;color:#fff;font-weight:700;}
+.nav-logo-text{font-family:var(--fd);font-size:17px;color:#fff;font-weight:700;}
 .nav-logo-text em{color:var(--verde2);font-style:normal;}
-.nav-sub{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase;margin-left:6px;padding-left:14px;border-left:1px solid rgba(255,255,255,.15);}
+.nav-sub{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase;display:none;}
+.nav-tabs{display:flex;gap:4px;}
+.nav-tab{
+  background:none;border:none;color:rgba(255,255,255,.45);
+  padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;
+  font-family:var(--fb);border-radius:8px;transition:all .15s;
+}
+.nav-tab.active,.nav-tab:hover{background:rgba(255,255,255,.1);color:#fff;}
 .refresh-btn{
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;
-  border-radius:20px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;
-  font-family:var(--fb);display:flex;align-items:center;gap:6px;transition:background .2s;
+  border-radius:20px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;
+  font-family:var(--fb);display:flex;align-items:center;gap:5px;transition:background .2s;
 }
 .refresh-btn:hover{background:rgba(61,143,88,.3);}
 
 /* PW SCREEN */
-.pw-screen{
-  min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:20px;
-}
+.pw-screen{min-height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:20px;}
 .pw-box{background:#fff;border-radius:20px;padding:40px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.08);}
 .pw-box h2{font-family:var(--fd);font-size:26px;margin-bottom:8px;}
 .pw-box p{font-size:13px;color:var(--gris);margin-bottom:24px;}
@@ -58,56 +63,113 @@ nav{
 .pw-btn:hover{background:var(--verde2);}
 .pw-err{color:var(--rojo);font-size:12px;margin-top:10px;min-height:16px;}
 
-/* DASHBOARD */
-.dash{display:none;padding:32px;max-width:1200px;margin:0 auto;}
-.dash.active{display:block;}
-.dash-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
-.dash-title{font-family:var(--fd);font-size:28px;font-weight:800;}
-.dash-sub{font-size:13px;color:var(--gris);}
+/* SECTIONS */
+.section{display:none;padding:24px;max-width:1200px;margin:0 auto;}
+.section.active{display:block;}
 
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
-.stat-card{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
-.stat-label{font-size:12px;color:var(--gris);margin-bottom:6px;}
-.stat-val{font-family:var(--fd);font-size:30px;font-weight:800;}
+/* PEDIDOS SECTION */
+.dash-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.dash-title{font-family:var(--fd);font-size:24px;font-weight:800;}
+.dash-sub{font-size:13px;color:var(--gris);}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.stat-label{font-size:11px;color:var(--gris);margin-bottom:5px;}
+.stat-val{font-family:var(--fd);font-size:26px;font-weight:800;}
 .stat-card.nuevo .stat-val{color:var(--rojo);}
 .stat-card.preparando .stat-val{color:var(--amarillo);}
 .stat-card.listo .stat-val{color:var(--verde);}
-
-.filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
-.filter-btn{
-  padding:8px 18px;border-radius:20px;border:1.5px solid var(--gris2);background:#fff;
-  font-size:12px;font-weight:600;cursor:pointer;color:var(--gris);font-family:var(--fb);transition:all .15s;
-}
+.filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.filter-btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--gris2);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--gris);font-family:var(--fb);transition:all .15s;}
 .filter-btn:hover,.filter-btn.active{background:var(--negro);border-color:var(--negro);color:#fff;}
-
-.pedidos-grid{display:flex;flex-direction:column;gap:12px;}
-.pedido-card{background:#fff;border-radius:16px;padding:20px 24px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:4px solid var(--gris2);}
+.pedidos-grid{display:flex;flex-direction:column;gap:10px;}
+.pedido-card{background:#fff;border-radius:16px;padding:18px 22px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:4px solid var(--gris2);}
 .pedido-card.estado-nuevo{border-left-color:var(--rojo);}
 .pedido-card.estado-preparando{border-left-color:var(--amarillo);}
-.pedido-card.estado-listo{border-left-color:var(--verde);}
+.pedido-card.estado-camino{border-left-color:#3a7fd9;}
 .pedido-card.estado-entregado{opacity:.55;}
-.pc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
-.pc-info strong{font-family:var(--fd);font-size:17px;display:block;}
-.pc-info span{font-size:12px;color:var(--gris);}
-.pc-badge{font-size:11px;font-weight:700;padding:5px 14px;border-radius:14px;text-transform:uppercase;letter-spacing:.04em;}
+.pc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.pc-info strong{font-family:var(--fd);font-size:16px;display:block;}
+.pc-info span{font-size:11px;color:var(--gris);}
+.pc-badge{font-size:10px;font-weight:700;padding:5px 12px;border-radius:14px;text-transform:uppercase;letter-spacing:.04em;}
 .badge-nuevo{background:#fde8e4;color:var(--rojo);}
 .badge-preparando{background:#fbf0d9;color:var(--amarillo);}
-.badge-listo{background:var(--verde-pale);color:var(--verde);}
+.badge-camino{background:#e3effc;color:#3a7fd9;}
 .badge-entregado{background:var(--fondo2);color:var(--gris);}
-.pc-items{list-style:none;margin:0 0 14px;padding:0;font-size:13px;color:var(--negro2);}
-.pc-items li{padding:4px 0;display:flex;justify-content:space-between;border-bottom:1px dashed var(--fondo2);}
-.pc-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1.5px solid var(--fondo2);}
-.pc-total{font-family:var(--fd);font-size:19px;font-weight:800;}
-.pc-actions{display:flex;gap:8px;}
-.pc-btn{
-  border:none;border-radius:10px;padding:9px 18px;font-size:12px;font-weight:700;
-  cursor:pointer;font-family:var(--fb);transition:opacity .2s;letter-spacing:.02em;
-}
+.pc-dir{background:var(--fondo);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;}
+.pc-dir strong{font-size:11px;color:var(--verde);display:block;margin-bottom:2px;}
+.pc-pago{font-size:12px;color:var(--negro2);margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.pc-items{list-style:none;margin:0 0 12px;padding:0;font-size:12px;color:var(--negro2);}
+.pc-items li{padding:3px 0;display:flex;justify-content:space-between;border-bottom:1px dashed var(--fondo2);}
+.pc-footer{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1.5px solid var(--fondo2);flex-wrap:wrap;gap:10px;}
+.pc-total{font-family:var(--fd);font-size:18px;font-weight:800;}
+.pc-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.pc-btn{border:none;border-radius:10px;padding:8px 16px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--fb);transition:opacity .2s;letter-spacing:.02em;}
 .pc-btn-next{background:var(--verde);color:#fff;}
 .pc-btn-next:hover{opacity:.88;}
 .pc-btn-tel{background:var(--fondo2);color:var(--negro);text-decoration:none;display:flex;align-items:center;gap:5px;}
-.empty-msg{text-align:center;padding:60px 20px;color:var(--gris);}
-.empty-msg-icon{font-size:48px;margin-bottom:12px;}
+.empty-msg{text-align:center;padding:50px 20px;color:var(--gris);}
+.empty-msg-icon{font-size:42px;margin-bottom:10px;}
+
+/* PRODUCTOS SECTION */
+.prod-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.a-tabs{display:flex;border-bottom:1.5px solid var(--fondo2);margin-bottom:20px;overflow-x:auto;}
+.a-tab{padding:9px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:none;border:none;color:var(--gris);cursor:pointer;font-family:var(--fb);border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .2s;white-space:nowrap;}
+.a-tab.active{color:var(--verde);border-bottom-color:var(--verde);}
+.a-sec{display:none;}
+.a-sec.active{display:block;}
+.af{margin-bottom:12px;}
+.af label{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gris);margin-bottom:5px;}
+.af input,.af select,.af textarea{width:100%;padding:10px 13px;border:1.5px solid var(--gris2);border-radius:10px;font-size:13px;font-family:var(--fb);background:#fff;color:var(--negro);outline:none;transition:border-color .2s;}
+.af input:focus,.af select:focus,.af textarea:focus{border-color:var(--verde);}
+.af textarea{height:65px;resize:vertical;}
+.ar2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.img-prev{width:100%;height:110px;background:var(--fondo);border:2px dashed var(--gris2);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s;position:relative;overflow:hidden;margin-bottom:6px;font-size:36px;color:var(--gris2);}
+.img-prev:hover{border-color:var(--verde);}
+.img-prev img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px;}
+.ab{width:100%;background:var(--verde);color:#fff;border:none;border-radius:10px;padding:12px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:var(--fb);margin-top:6px;transition:background .2s;}
+.ab:hover{background:var(--verde2);}
+.ab.red{background:var(--rojo);}
+.ab.red:hover{background:#c04030;}
+.ilist{display:flex;flex-direction:column;gap:8px;}
+.irow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--fondo2);border-radius:10px;transition:border-color .2s;}
+.irow:hover{border-color:var(--verde);}
+.irow-img{width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--fondo);}
+.irow-img img{width:100%;height:100%;object-fit:cover;}
+.irow-info{flex:1;}
+.irow-info strong{font-size:13px;font-weight:600;color:var(--negro);display:block;}
+.irow-info span{font-size:11px;color:var(--gris);}
+.irow-info .stock-low{color:var(--rojo);font-weight:700;}
+.rb{display:flex;gap:6px;}
+.be,.bd{padding:5px 11px;font-size:11px;font-weight:600;border-radius:16px;cursor:pointer;font-family:var(--fb);border:1.5px solid;background:transparent;}
+.be{color:var(--verde);border-color:var(--verde);}
+.be:hover{background:var(--verde);color:#fff;}
+.bd{color:var(--rojo);border-color:rgba(217,79,61,.3);}
+.bd:hover{background:var(--rojo);color:#fff;}
+.sg{margin-bottom:20px;}
+.sg-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--verde);margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid var(--fondo2);}
+.sr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.sr>label:first-child{font-size:13px;color:var(--negro);}
+.sr input[type=text],.sr select{padding:7px 11px;border:1.5px solid var(--gris2);border-radius:8px;font-size:12px;font-family:var(--fb);background:#fff;outline:none;min-width:130px;}
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.tsl{position:absolute;inset:0;background:var(--gris2);cursor:pointer;border-radius:12px;transition:background .3s;}
+.tsl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .3s;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+.toggle input:checked+.tsl{background:var(--verde);}
+.toggle input:checked+.tsl::before{transform:translateX(18px);}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--negro);color:#fff;border-radius:24px;padding:12px 22px;font-size:13px;font-weight:500;z-index:400;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.2);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+@media(min-width:640px){
+  .nav-sub{display:block;}
+}
+@media(max-width:640px){
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .section{padding:16px;}
+  .ar2{grid-template-columns:1fr;}
+  .sr{flex-direction:column;align-items:flex-start;}
+  .sr input[type=text],.sr select{width:100%;min-width:unset;}
+}
 </style>
 </head>
 <body>
@@ -116,56 +178,149 @@ nav{
   <div class="nav-logo">
     <div class="nav-logo-leaf"><span>🌿</span></div>
     <span class="nav-logo-text">La <em>Canasta</em></span>
-    <span class="nav-sub">Panel de Pedidos</span>
+    <span class="nav-sub" style="margin-left:8px">Panel operativo</span>
   </div>
-  <button class="refresh-btn" onclick="cargarPedidos()" id="refresh-btn">🔄 Actualizar</button>
+  <div class="nav-tabs" id="nav-tabs" style="display:none">
+    <button class="nav-tab active" onclick="cambiarSeccion('pedidos',this)">📦 Pedidos</button>
+    <button class="nav-tab" onclick="cambiarSeccion('productos',this)">🛒 Productos</button>
+    <button class="nav-tab" onclick="cambiarSeccion('config',this)">⚙️ Config</button>
+  </div>
+  <button class="refresh-btn" onclick="cargarPedidos()" id="refresh-btn" style="display:none">🔄 Actualizar</button>
 </nav>
 
 <!-- ACCESO -->
 <div class="pw-screen" id="pw-screen">
   <div class="pw-box">
     <h2>Acceso del Local</h2>
-    <p>Ingresa la contraseña para ver los pedidos</p>
+    <p>Ingresa la contraseña para gestionar pedidos y productos</p>
     <input class="pw-input" type="password" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
     <button class="pw-btn" onclick="checkPw()">Entrar →</button>
     <div class="pw-err" id="pw-err"></div>
   </div>
 </div>
 
-<!-- DASHBOARD -->
-<div class="dash" id="dash">
+<!-- SECCIÓN PEDIDOS -->
+<div class="section" id="sec-pedidos">
   <div class="dash-header">
     <div>
       <div class="dash-title">Pedidos de hoy</div>
       <div class="dash-sub" id="dash-sub">Cargando...</div>
     </div>
   </div>
-
   <div class="stats-row">
     <div class="stat-card nuevo"><div class="stat-label">Nuevos</div><div class="stat-val" id="count-nuevo">0</div></div>
     <div class="stat-card preparando"><div class="stat-label">Preparando</div><div class="stat-val" id="count-preparando">0</div></div>
-    <div class="stat-card listo"><div class="stat-label">Listos</div><div class="stat-val" id="count-listo">0</div></div>
+    <div class="stat-card listo"><div class="stat-label">En camino</div><div class="stat-val" id="count-camino">0</div></div>
     <div class="stat-card"><div class="stat-label">Total del día</div><div class="stat-val" id="count-total">$0</div></div>
   </div>
-
   <div class="filters">
     <button class="filter-btn active" onclick="filtrar('todos',this)">Todos</button>
     <button class="filter-btn" onclick="filtrar('nuevo',this)">Nuevos</button>
     <button class="filter-btn" onclick="filtrar('preparando',this)">Preparando</button>
-    <button class="filter-btn" onclick="filtrar('listo',this)">Listos</button>
+    <button class="filter-btn" onclick="filtrar('camino',this)">En camino</button>
     <button class="filter-btn" onclick="filtrar('entregado',this)">Entregados</button>
   </div>
-
   <div class="pedidos-grid" id="pedidos-grid"></div>
 </div>
+
+<!-- SECCIÓN PRODUCTOS (ADMIN) -->
+<div class="section" id="sec-productos">
+  <div class="prod-section-header">
+    <div class="dash-title">Gestión de productos</div>
+  </div>
+  <div class="a-tabs">
+    <button class="a-tab active" onclick="aTab('add',this)">+ Agregar</button>
+    <button class="a-tab" onclick="aTab('list',this)">Editar productos</button>
+  </div>
+  <div class="a-sec active" id="tab-add">
+    <div class="af"><label>Imagen</label>
+      <div class="img-prev" id="add-ip" onclick="document.getElementById('add-file').click()">📷</div>
+      <input type="file" id="add-file" accept="image/*" style="display:none" onchange="pImg(this,'add-ip')">
+    </div>
+    <div class="ar2">
+      <div class="af"><label>Nombre</label><input type="text" id="add-n" placeholder="Ej: Manzana Roja"></div>
+      <div class="af"><label>Categoría</label>
+        <select id="add-c">
+          <option value="frutas">Frutas</option><option value="verduras">Verduras</option>
+          <option value="lacteos">Lácteos</option><option value="botanas">Botanas</option>
+          <option value="bebidas">Bebidas</option><option value="limpieza">Limpieza</option>
+        </select>
+      </div>
+    </div>
+    <div class="ar2">
+      <div class="af"><label>Precio ($)</label><input type="number" id="add-p" placeholder="25"></div>
+      <div class="af"><label>Stock inicial</label><input type="number" id="add-stock" placeholder="100" value="100"></div>
+    </div>
+    <div class="ar2">
+      <div class="af"><label>Unidad</label><input type="text" id="add-u" placeholder="kg, pza, lt…"></div>
+      <div class="af"><label>Badge</label>
+        <select id="add-b"><option value="">Ninguno</option><option value="oferta">🔥 Oferta</option><option value="nuevo">✨ Nuevo</option><option value="popular">⭐ Popular</option></select>
+      </div>
+    </div>
+    <button class="ab" onclick="addProd()">Agregar producto</button>
+  </div>
+  <div class="a-sec" id="tab-list"><div class="ilist" id="prod-admin-list"></div></div>
+  <div class="a-sec" id="tab-edit">
+    <button onclick="aTab('list',document.querySelectorAll('.a-tab')[1])" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--gris);margin-bottom:14px;font-family:var(--fb);">← Volver</button>
+    <div class="af"><label>Imagen</label>
+      <div class="img-prev" id="edit-ip" onclick="document.getElementById('edit-file').click()">📷</div>
+      <input type="file" id="edit-file" accept="image/*" style="display:none" onchange="pImg(this,'edit-ip')">
+    </div>
+    <div class="ar2">
+      <div class="af"><label>Nombre</label><input type="text" id="edit-n"></div>
+      <div class="af"><label>Categoría</label>
+        <select id="edit-c"><option value="frutas">Frutas</option><option value="verduras">Verduras</option><option value="lacteos">Lácteos</option><option value="botanas">Botanas</option><option value="bebidas">Bebidas</option><option value="limpieza">Limpieza</option></select>
+      </div>
+    </div>
+    <div class="ar2">
+      <div class="af"><label>Precio ($)</label><input type="number" id="edit-p"></div>
+      <div class="af"><label>Stock actual</label><input type="number" id="edit-stock"></div>
+    </div>
+    <div class="ar2">
+      <div class="af"><label>Unidad</label><input type="text" id="edit-u"></div>
+      <div class="af"><label>Badge</label><select id="edit-b"><option value="">Ninguno</option><option value="oferta">🔥 Oferta</option><option value="nuevo">✨ Nuevo</option><option value="popular">⭐ Popular</option></select></div>
+    </div>
+    <input type="hidden" id="edit-id">
+    <button class="ab" onclick="saveProd()">Guardar cambios</button>
+    <button class="ab red" onclick="delProd()" style="margin-top:8px">Eliminar producto</button>
+  </div>
+</div>
+
+<!-- SECCIÓN CONFIGURACIÓN -->
+<div class="section" id="sec-config">
+  <div class="dash-title" style="margin-bottom:20px">Configuración</div>
+  <div class="sg"><div class="sg-title">Tienda</div>
+    <div class="sr"><label>Nombre</label><input type="text" value="La Canasta"></div>
+    <div class="sr"><label>Dirección</label><input type="text" value="Calle Principal 123"></div>
+    <div class="sr"><label>Teléfono</label><input type="text" value="+52 33 1234 5678"></div>
+  </div>
+  <div class="sg"><div class="sg-title">Horarios</div>
+    <div class="sr"><label>Lun–Sáb</label><input type="text" value="7:00 – 21:00"></div>
+    <div class="sr"><label>Domingo</label><input type="text" value="8:00 – 15:00"></div>
+  </div>
+  <div class="sg"><div class="sg-title">Funciones</div>
+    <div class="sr"><label>Carrito activo</label><label class="toggle"><input type="checkbox" checked><span class="tsl"></span></label></div>
+    <div class="sr"><label>Envío a domicilio</label><label class="toggle"><input type="checkbox" checked><span class="tsl"></span></label></div>
+  </div>
+  <div class="sg"><div class="sg-title">Contraseña de acceso</div>
+    <div class="af"><label>Contraseña actual</label><input type="password" id="p-cur" placeholder="••••••"></div>
+    <div class="af"><label>Nueva contraseña</label><input type="password" id="p-new" placeholder="••••••"></div>
+    <div class="af"><label>Confirmar</label><input type="password" id="p-con" placeholder="••••••"></div>
+    <div class="pw-err" id="p-err"></div>
+    <button class="ab" onclick="changePw()">Actualizar contraseña</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 const SUPABASE_URL = 'https://mnieoqxfezvmkvbpaouk.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Tt3CVL8FTfmDPMgCLKL8_Q_0HcHR0Dz';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let PANEL_PW = 'canasta2025'; // misma contraseña que el panel admin de productos, cámbiala si quieres una distinta
+let PANEL_PW = 'canasta2025';
 let pedidos = [];
+let catalog = [];
 let filtroActivo = 'todos';
 
 function checkPw(){
@@ -173,25 +328,37 @@ function checkPw(){
   const err = document.getElementById('pw-err');
   if(v === PANEL_PW){
     document.getElementById('pw-screen').style.display = 'none';
-    document.getElementById('dash').classList.add('active');
+    document.getElementById('nav-tabs').style.display = 'flex';
+    document.getElementById('refresh-btn').style.display = 'flex';
+    document.getElementById('sec-pedidos').classList.add('active');
     cargarPedidos();
+    cargarProductos();
   } else {
     err.textContent = 'Contraseña incorrecta ❌';
     document.getElementById('pw-input').value = '';
   }
 }
 
+function cambiarSeccion(nombre, btn){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+nombre).classList.add('active');
+  document.getElementById('refresh-btn').style.display = nombre==='pedidos' ? 'flex' : 'none';
+}
+
+/* ── PEDIDOS ── */
 const estadoConfig = {
   nuevo:      { label: 'Nuevo',       next: 'preparando', nextLabel: 'Empezar preparación' },
-  preparando: { label: 'Preparando',  next: 'listo',       nextLabel: 'Marcar listo' },
-  listo:      { label: 'Listo',       next: 'entregado',   nextLabel: 'Marcar entregado' },
+  preparando: { label: 'Preparando',  next: 'camino',      nextLabel: 'Marcar en camino' },
+  camino:     { label: 'En camino',   next: 'entregado',   nextLabel: 'Marcar entregado' },
   entregado:  { label: 'Entregado',   next: null,          nextLabel: null },
 };
 
 async function cargarPedidos(){
   const btn = document.getElementById('refresh-btn');
   btn.textContent = '⏳ Cargando...';
-  const { data, error } = await sb.from('pedidos').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb.from('pedidos').select('*').order('id', { ascending: false });
   btn.textContent = '🔄 Actualizar';
   if(error){ console.error(error); document.getElementById('dash-sub').textContent = 'Error al cargar pedidos'; return; }
   pedidos = data || [];
@@ -203,10 +370,28 @@ function renderDash(){
   document.getElementById('dash-sub').textContent = `${activos.length} pedidos activos · ${pedidos.length} en total hoy`;
   document.getElementById('count-nuevo').textContent = pedidos.filter(p=>p.estado==='nuevo').length;
   document.getElementById('count-preparando').textContent = pedidos.filter(p=>p.estado==='preparando').length;
-  document.getElementById('count-listo').textContent = pedidos.filter(p=>p.estado==='listo').length;
+  document.getElementById('count-camino').textContent = pedidos.filter(p=>p.estado==='camino').length;
   const totalDia = pedidos.reduce((s,p)=>s+(p.total||0),0);
   document.getElementById('count-total').textContent = '$'+totalDia.toLocaleString();
   renderLista();
+}
+
+function formatearDireccion(dir){
+  if(!dir) return 'Sin dirección registrada';
+  let txt = dir.calle || '';
+  if(dir.numero_exterior) txt += ` #${dir.numero_exterior}`;
+  if(dir.numero_interior) txt += `, Int. ${dir.numero_interior}`;
+  if(dir.condominio) txt += ` — ${dir.condominio}`;
+  if(dir.referencia) txt += `<br><span style="color:var(--gris)">📍 ${dir.referencia}</span>`;
+  return txt;
+}
+
+function formatearPago(pago){
+  if(!pago) return 'No especificado';
+  if(pago.metodo === 'efectivo'){
+    return pago.billete === 'exacto' ? '💵 Efectivo (pago exacto)' : `💵 Efectivo (paga con $${pago.billete}, dar cambio)`;
+  }
+  return `💳 Tarjeta de ${pago.tipo_tarjeta === 'credito' ? 'crédito' : 'débito'} (cobro manual)`;
 }
 
 function renderLista(){
@@ -219,8 +404,7 @@ function renderLista(){
   }
   lista.forEach(p=>{
     const cfg = estadoConfig[p.estado] || estadoConfig.nuevo;
-    const fecha = new Date(p.created_at);
-    const hora = fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    const hora = p.created_at ? new Date(p.created_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '';
     const items = (p.productos||[]).map(it=>`<li><span>${it.nombre} x${it.cantidad}</span><span>$${(it.precio_unitario*it.cantidad).toLocaleString()}</span></li>`).join('');
     const telLink = p.cliente_telefono ? `<a class="pc-btn pc-btn-tel" href="https://wa.me/${p.cliente_telefono.replace(/\D/g,'')}" target="_blank">📞 ${p.cliente_telefono}</a>` : '';
     const nextBtn = cfg.next ? `<button class="pc-btn pc-btn-next" onclick="avanzarEstado(${p.id})">${cfg.nextLabel} →</button>` : '';
@@ -231,10 +415,12 @@ function renderLista(){
       <div class="pc-top">
         <div class="pc-info">
           <strong>Pedido #${p.id} — ${p.cliente_nombre}</strong>
-          <span>${hora}</span>
+          ${hora ? `<span>${hora}</span>` : ''}
         </div>
         <span class="pc-badge badge-${p.estado}">${cfg.label}</span>
       </div>
+      <div class="pc-dir"><strong>Dirección de entrega</strong>${formatearDireccion(p.direccion)}</div>
+      <div class="pc-pago">${formatearPago(p.metodo_pago)}</div>
       <ul class="pc-items">${items}</ul>
       <div class="pc-footer">
         <span class="pc-total">$${(p.total||0).toLocaleString()}</span>
@@ -251,7 +437,7 @@ async function avanzarEstado(id){
   const cfg = estadoConfig[pedido.estado];
   if(!cfg.next) return;
   const { error } = await sb.from('pedidos').update({estado: cfg.next}).eq('id', id);
-  if(error){ alert('No se pudo actualizar el pedido'); console.error(error); return; }
+  if(error){ showToast('⚠️ No se pudo actualizar el pedido'); console.error(error); return; }
   await cargarPedidos();
 }
 
@@ -262,9 +448,117 @@ function filtrar(estado, btn){
   renderLista();
 }
 
-// Refresca automáticamente cada 30 segundos si la sesión está activa
+/* ── PRODUCTOS (ADMIN) ── */
+async function cargarProductos(){
+  const { data, error } = await sb.from('productos').select('*').order('id');
+  if(error){ console.error(error); return; }
+  catalog = data.map(p => ({
+    id: p.id, cat: p.categoria, name: p.nombre, unit: p.unidad,
+    price: p.precio, stock: p.stock, badge: p.badge || '', img: p.imagen_url
+  }));
+}
+
+function pImg(input,prevId){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{const p=document.getElementById(prevId);p.querySelectorAll('img').forEach(i=>i.remove());const img=document.createElement('img');img.src=e.target.result;p.appendChild(img);p.dataset.img=e.target.result;};
+  r.readAsDataURL(f);
+}
+
+function aTab(name,btn){
+  document.querySelectorAll('.a-tab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.a-sec').forEach(s=>s.classList.remove('active'));
+  const s=document.getElementById('tab-'+name);if(s)s.classList.add('active');
+  if(name==='list')renderAdminList();
+}
+
+async function addProd(){
+  const n=document.getElementById('add-n').value.trim(),p=parseFloat(document.getElementById('add-p').value);
+  if(!n||!p){showToast('⚠️ Nombre y precio requeridos');return;}
+  const imgData=document.getElementById('add-ip').dataset.img||'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80&auto=format&fit=crop';
+  const stockInicial = parseInt(document.getElementById('add-stock').value) || 100;
+  const nuevo = {
+    nombre: n, categoria: document.getElementById('add-c').value,
+    unidad: document.getElementById('add-u').value||'pza', precio: p,
+    stock: stockInicial, badge: document.getElementById('add-b').value, imagen_url: imgData
+  };
+  const { error } = await sb.from('productos').insert(nuevo);
+  if(error){ showToast('⚠️ Error al guardar: '+error.message); return; }
+  await cargarProductos();
+  ['add-n','add-p','add-u'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('add-stock').value='100';
+  document.getElementById('add-b').value='';
+  const ip=document.getElementById('add-ip');ip.querySelectorAll('img').forEach(i=>i.remove());delete ip.dataset.img;
+  showToast('✅ Producto agregado');
+}
+
+function renderAdminList(){
+  const list=document.getElementById('prod-admin-list');list.innerHTML='';
+  catalog.forEach(p=>{
+    const stockClass = p.stock <= 5 ? 'stock-low' : '';
+    const div=document.createElement('div');div.className='irow';
+    div.innerHTML=`<div class="irow-img"><img src="${p.img}" alt="${p.name}"></div>
+      <div class="irow-info"><strong>${p.name}</strong><span>$${p.price} · ${p.cat} · <span class="${stockClass}">Stock: ${p.stock}</span></span></div>
+      <div class="rb"><button class="be" onclick="openEdit(${p.id})">Editar</button></div>`;
+    list.appendChild(div);
+  });
+}
+
+function openEdit(id){
+  const p=catalog.find(x=>x.id===id);if(!p)return;
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-n').value=p.name;
+  document.getElementById('edit-c').value=p.cat;
+  document.getElementById('edit-p').value=p.price;
+  document.getElementById('edit-stock').value=p.stock;
+  document.getElementById('edit-u').value=p.unit;
+  document.getElementById('edit-b').value=p.badge||'';
+  const ip=document.getElementById('edit-ip');ip.querySelectorAll('img').forEach(i=>i.remove());
+  const img=document.createElement('img');img.src=p.img;ip.appendChild(img);ip.dataset.img=p.img;
+  aTab('edit',null);
+}
+
+async function saveProd(){
+  const id=parseInt(document.getElementById('edit-id').value);
+  const cambios = {
+    nombre: document.getElementById('edit-n').value,
+    categoria: document.getElementById('edit-c').value,
+    precio: parseFloat(document.getElementById('edit-p').value),
+    stock: parseInt(document.getElementById('edit-stock').value) || 0,
+    unidad: document.getElementById('edit-u').value,
+    badge: document.getElementById('edit-b').value,
+    imagen_url: document.getElementById('edit-ip').dataset.img || catalog.find(x=>x.id===id)?.img
+  };
+  const { error } = await sb.from('productos').update(cambios).eq('id', id);
+  if(error){ showToast('⚠️ Error al actualizar: '+error.message); return; }
+  await cargarProductos();
+  showToast('✅ Producto actualizado');aTab('list',document.querySelectorAll('.a-tab')[1]);
+}
+
+async function delProd(){
+  const id=parseInt(document.getElementById('edit-id').value);
+  if(!confirm('¿Eliminar este producto?'))return;
+  const { error } = await sb.from('productos').delete().eq('id', id);
+  if(error){ showToast('⚠️ Error al eliminar: '+error.message); return; }
+  await cargarProductos();
+  showToast('Producto eliminado');aTab('list',document.querySelectorAll('.a-tab')[1]);
+}
+
+/* ── CONFIGURACIÓN ── */
+function changePw(){
+  const cur=document.getElementById('p-cur').value,nw=document.getElementById('p-new').value,con=document.getElementById('p-con').value,err=document.getElementById('p-err');
+  if(cur!==PANEL_PW){err.textContent='Contraseña actual incorrecta';err.style.display='block';return;}
+  if(nw.length<4){err.textContent='Mínimo 4 caracteres';err.style.display='block';return;}
+  if(nw!==con){err.textContent='Las contraseñas no coinciden';err.style.display='block';return;}
+  PANEL_PW=nw;err.style.display='none';['p-cur','p-new','p-con'].forEach(id=>document.getElementById(id).value='');showToast('✅ Contraseña actualizada (solo para esta sesión)');
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// Refresca automáticamente cada 30 segundos si la sección de pedidos está activa
 setInterval(()=>{
-  if(document.getElementById('dash').classList.contains('active')) cargarPedidos();
+  if(document.getElementById('sec-pedidos').classList.contains('active')) cargarPedidos();
 }, 30000);
 </script>
 </body>
