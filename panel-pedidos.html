@@ -87,6 +87,7 @@ nav{
 .pedido-card.estado-preparando{border-left-color:var(--amarillo);}
 .pedido-card.estado-camino{border-left-color:#3a7fd9;}
 .pedido-card.estado-entregado{opacity:.55;}
+.pedido-card.estado-cancelado{opacity:.4;border-left-color:var(--gris);}
 .pc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
 .pc-info strong{font-family:var(--fd);font-size:16px;display:block;}
 .pc-info span{font-size:11px;color:var(--gris);}
@@ -95,6 +96,7 @@ nav{
 .badge-preparando{background:#fbf0d9;color:var(--amarillo);}
 .badge-camino{background:#e3effc;color:#3a7fd9;}
 .badge-entregado{background:var(--fondo2);color:var(--gris);}
+.badge-cancelado{background:#f0f0ee;color:var(--gris);}
 .pc-dir{background:var(--fondo);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;}
 .pc-dir strong{font-size:11px;color:var(--verde);display:block;margin-bottom:2px;}
 .pc-pago{font-size:12px;color:var(--negro2);margin-bottom:10px;display:flex;align-items:center;gap:5px;}
@@ -219,6 +221,7 @@ nav{
     <button class="filter-btn" onclick="filtrar('preparando',this)">Preparando</button>
     <button class="filter-btn" onclick="filtrar('camino',this)">En camino</button>
     <button class="filter-btn" onclick="filtrar('entregado',this)">Entregados</button>
+    <button class="filter-btn" onclick="filtrar('cancelado',this)">Cancelados</button>
   </div>
   <div class="pedidos-grid" id="pedidos-grid"></div>
 </div>
@@ -353,6 +356,7 @@ const estadoConfig = {
   preparando: { label: 'Preparando',  next: 'camino',      nextLabel: 'Marcar en camino' },
   camino:     { label: 'En camino',   next: 'entregado',   nextLabel: 'Marcar entregado' },
   entregado:  { label: 'Entregado',   next: null,          nextLabel: null },
+  cancelado:  { label: 'Cancelado',   next: null,          nextLabel: null },
 };
 
 async function cargarPedidos(){
