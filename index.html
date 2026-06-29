@@ -819,6 +819,7 @@ let metodoPagoSeleccionado = 'efectivo';
 function abrirCheckout(){
   const keys=Object.keys(cart);
   if(!keys.length){ showToast('🧺 Tu canasta está vacía'); return; }
+  closeCart();
   document.getElementById('checkout-overlay').classList.add('open');
 }
 function cerrarCheckout(){document.getElementById('checkout-overlay').classList.remove('open');}
