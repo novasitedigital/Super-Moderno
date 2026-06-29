@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento de pedido — La Canasta</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --blanco:#ffffff; --fondo:#f7f4ef; --fondo2:#ede9e1;
+  --negro:#1a1a16; --negro2:#2d2d27;
+  --verde:#2a6b3f; --verde2:#3d8f58; --verde-pale:#e6f2ea;
+  --rojo:#d94f3d; --amarillo:#e8a020;
+  --gris:#8a8878; --gris2:#d4cfc4;
+  --fd:'Syne',sans-serif; --fb:'Manrope',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--fb);background:var(--fondo);color:var(--negro);min-height:100vh;display:flex;flex-direction:column;}
+
+/* TOPBAR */
+.topbar{background:var(--verde);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;}
+.tb-logo{font-family:var(--fd);font-size:20px;font-weight:800;color:#fff;text-decoration:none;letter-spacing:-.3px;}
+.tb-link{font-size:13px;font-weight:600;color:#fff;text-decoration:none;opacity:.9;transition:opacity .2s;}
+.tb-link:hover{opacity:1;}
+
+/* LAYOUT */
+.wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 18px;}
+.card{background:var(--blanco);border-radius:18px;width:100%;max-width:520px;padding:34px 30px;box-shadow:0 10px 40px rgba(26,26,22,.08);}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--verde2);margin-bottom:8px;}
+h1{font-family:var(--fd);font-size:30px;font-weight:800;line-height:1.05;margin-bottom:8px;}
+.lead{font-size:14px;color:var(--gris);margin-bottom:24px;line-height:1.5;}
+
+/* FORM */
+label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;color:var(--negro2);}
+.field{margin-bottom:16px;}
+input{width:100%;padding:13px 15px;border:1.5px solid var(--gris2);border-radius:10px;font-size:15px;font-family:var(--fb);background:#fff;color:var(--negro);outline:none;transition:border-color .2s;}
+input:focus{border-color:var(--verde);}
+.hint{font-size:12px;color:var(--gris);margin-top:5px;}
+.btn{width:100%;background:var(--verde);color:#fff;border:none;border-radius:10px;padding:15px;font-size:14px;font-weight:700;letter-spacing:.04em;cursor:pointer;font-family:var(--fb);transition:background .2s;margin-top:6px;}
+.btn:hover{background:var(--verde2);}
+.btn:disabled{opacity:.6;cursor:default;}
+.error{background:#fdecea;border:1px solid #f5c6bf;color:var(--rojo);font-size:13px;font-weight:600;padding:11px 14px;border-radius:10px;margin-bottom:16px;display:none;line-height:1.4;}
+.error.show{display:block;}
+
+/* RESULTADO */
+.result{display:none;}
+.result.show{display:block;}
+.greet{font-size:14px;color:var(--gris);margin-bottom:2px;}
+.ordernum{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--verde2);letter-spacing:.06em;}
+.status-emoji{font-size:54px;text-align:center;margin:14px 0 4px;}
+.status-title{font-family:var(--fd);font-size:26px;font-weight:800;text-align:center;margin-bottom:6px;}
+.status-sub{font-size:14px;color:var(--gris);text-align:center;margin-bottom:30px;line-height:1.5;padding:0 8px;}
+
+/* STEPPER (mismo componente que la tienda) */
+.track-steps{display:flex;justify-content:space-between;align-items:flex-start;padding:0 6px;margin-bottom:8px;}
+.track-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;}
+.track-step::before{content:'';position:absolute;top:7px;left:-50%;width:100%;height:2px;background:var(--gris2);z-index:0;transition:background .3s;}
+.track-step:first-child::before{display:none;}
+.track-step.active::before,.track-step.done::before{background:var(--verde);}
+.ts-dot{width:16px;height:16px;border-radius:50%;background:var(--gris2);position:relative;z-index:1;border:3px solid var(--blanco);box-shadow:0 0 0 1px var(--gris2);transition:background .3s;}
+.track-step.active .ts-dot,.track-step.done .ts-dot{background:var(--verde);box-shadow:0 0 0 1px var(--verde);}
+.track-step.active .ts-dot{animation:pulse 1.6s ease-in-out infinite;}
+.ts-label{font-size:11px;color:var(--gris);text-align:center;}
+.track-step.active .ts-label,.track-step.done .ts-label{color:var(--verde);font-weight:700;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 1px var(--verde);}50%{box-shadow:0 0 0 5px var(--verde-pale);}}
+
+/* RESUMEN */
+.resumen{background:var(--fondo);border-radius:12px;padding:18px;margin-top:28px;}
+.resumen-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.resumen-titulo{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--negro2);}
+.resumen-fecha{font-size:12px;color:var(--gris);}
+.linea{display:flex;justify-content:space-between;gap:12px;font-size:14px;padding:7px 0;border-bottom:1px solid var(--gris2);}
+.linea:last-of-type{border-bottom:none;}
+.linea-nombre{color:var(--negro2);}
+.linea-nombre b{color:var(--verde);font-family:var(--fd);}
+.linea-precio{font-weight:600;white-space:nowrap;}
+.total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:2px solid var(--negro);}
+.total-lab{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.total-val{font-family:var(--fd);font-size:24px;font-weight:800;color:var(--verde);}
+
+/* FOOTER DEL CARD */
+.live{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:var(--gris);margin-top:18px;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--verde2);animation:blink 1.6s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+.wa-btn{display:block;text-align:center;width:100%;background:#25d366;color:#fff;text-decoration:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;font-family:var(--fb);margin-top:16px;}
+.link-otro{display:block;width:100%;background:none;border:1.5px solid var(--gris2);color:var(--gris);border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--fb);margin-top:10px;transition:all .2s;}
+.link-otro:hover{border-color:var(--verde);color:var(--verde);}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+@media(max-width:480px){.card{padding:26px 20px;}h1{font-size:26px;}.ts-label{font-size:10px;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="tb-logo" href="index.html">🧺 La Canasta</a>
+  <a class="tb-link" href="index.html">← Volver a la tienda</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+
+    <!-- VISTA 1: BUSCAR -->
+    <div id="lookup">
+      <div class="eyebrow">Seguimiento de pedido</div>
+      <h1>¿Cómo va tu pedido?</h1>
+      <p class="lead">Escribe tu número de pedido y los últimos 4 dígitos de tu teléfono para ver el estado en tiempo real.</p>
+
+      <div class="error" id="err"></div>
+
+      <div class="field">
+        <label for="inp-id">Número de pedido</label>
+        <input id="inp-id" type="text" inputmode="numeric" placeholder="Ej. 42" autocomplete="off">
+        <div class="hint">Es el número que te dimos al confirmar tu compra (Pedido #...).</div>
+      </div>
+
+      <div class="field">
+        <label for="inp-tel">Últimos 4 dígitos de tu teléfono</label>
+        <input id="inp-tel" type="text" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+      </div>
+
+      <button class="btn" id="btn-buscar" onclick="buscarPedido()">Ver mi pedido</button>
+    </div>
+
+    <!-- VISTA 2: RESULTADO -->
+    <div class="result" id="result">
+      <div class="greet" id="r-greet"></div>
+      <div class="ordernum" id="r-num"></div>
+      <div class="status-emoji" id="r-emoji"></div>
+      <div class="status-title" id="r-title"></div>
+      <div class="status-sub" id="r-sub"></div>
+
+      <div class="track-steps">
+        <div class="track-step" id="step-nuevo"><div class="ts-dot"></div><div class="ts-label">Pendiente</div></div>
+        <div class="track-step" id="step-preparando"><div class="ts-dot"></div><div class="ts-label">Preparando</div></div>
+        <div class="track-step" id="step-camino"><div class="ts-dot"></div><div class="ts-label">En camino</div></div>
+        <div class="track-step" id="step-entregado"><div class="ts-dot"></div><div class="ts-label">Entregado</div></div>
+      </div>
+
+      <div class="resumen">
+        <div class="resumen-head">
+          <span class="resumen-titulo">Tu pedido</span>
+          <span class="resumen-fecha" id="r-fecha"></span>
+        </div>
+        <div id="r-productos"></div>
+        <div class="total">
+          <span class="total-lab">Total</span>
+          <span class="total-val" id="r-total"></span>
+        </div>
+      </div>
+
+      <a class="wa-btn" id="r-wa" style="display:none" target="_blank" rel="noopener">💬 Contactar a la tienda</a>
+      <div class="live" id="r-live"><span class="live-dot"></span> Se actualiza solo cada 15 segundos</div>
+      <button class="link-otro" onclick="reiniciar()">Consultar otro pedido</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://mnieoqxfezvmkvbpaouk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Tt3CVL8FTfmDPMgCLKL8_Q_0HcHR0Dz';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ⬇️ Pon aquí el WhatsApp de la tienda (con 52, sin espacios ni guiones) para activar el botón "Contactar a la tienda".
+// Déjalo como '' (vacío) si no quieres mostrarlo. Ejemplo: '5213312345678'
+const WHATSAPP_TIENDA = '';
+
+// Cada estado de la BD con su texto e ícono. Coincide con el flujo: nuevo → preparando → camino → entregado
+const ESTADOS = {
+  nuevo:      { i:0, emoji:'📋', titulo:'Pedido recibido',       sub:'Ya tenemos tu pedido y lo estamos confirmando. ¡Gracias por tu compra!' },
+  preparando: { i:1, emoji:'🧺', titulo:'Preparando tu canasta', sub:'Estamos juntando tus productos fresquecitos.' },
+  camino:     { i:2, emoji:'🛵', titulo:'En camino',             sub:'Tu pedido ya va para allá. Ten listo tu pago, porfa.' },
+  entregado:  { i:3, emoji:'✅', titulo:'¡Pedido entregado!',     sub:'Esperamos que disfrutes tu compra. ¡Gracias y vuelve pronto!' }
+};
+const ORDEN = ['nuevo','preparando','camino','entregado'];
+
+let pedidoActivo = null;   // {id, tel4}
+let timer = null;
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  // Autocompletar el número si el cliente acaba de hacer un pedido en esta misma compu
+  const ultimo = localStorage.getItem('ultimoPedidoId');
+  if(ultimo) document.getElementById('inp-id').value = ultimo;
+
+  // Permitir buscar con la tecla Enter
+  document.querySelectorAll('#lookup input').forEach(i=>{
+    i.addEventListener('keydown', e=>{ if(e.key === 'Enter') buscarPedido(); });
+  });
+
+  // El campo de teléfono solo acepta dígitos
+  document.getElementById('inp-tel').addEventListener('input', e=>{
+    e.target.value = e.target.value.replace(/\D/g,'');
+  });
+});
+
+function mostrarError(msg){
+  const el = document.getElementById('err');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function limpiarError(){ document.getElementById('err').classList.remove('show'); }
+
+async function buscarPedido(){
+  limpiarError();
+  const idRaw = document.getElementById('inp-id').value.trim();
+  const tel4  = document.getElementById('inp-tel').value.trim();
+  const id = parseInt(idRaw, 10);
+
+  if(!idRaw || isNaN(id)){ mostrarError('Escribe un número de pedido válido.'); return; }
+  if(tel4.length !== 4){ mostrarError('Escribe los últimos 4 dígitos de tu teléfono.'); return; }
+
+  const btn = document.getElementById('btn-buscar');
+  btn.disabled = true; btn.textContent = 'Buscando...';
+
+  const ok = await cargarPedido(id, tel4);
+
+  btn.disabled = false; btn.textContent = 'Ver mi pedido';
+
+  if(ok){
+    pedidoActivo = { id, tel4 };
+    document.getElementById('lookup').style.display = 'none';
+    document.getElementById('result').classList.add('show');
+    iniciarAutoRefresh();
+  }
+}
+
+// Trae el pedido de Supabase, verifica el teléfono y lo pinta. Devuelve true si todo salió bien.
+async function cargarPedido(id, tel4){
+  const { data, error } = await sb
+    .from('pedidos')
+    .select('id, cliente_nombre, cliente_telefono, productos, total, estado, created_at')
+    .eq('id', id)
+    .single();
+
+  if(error || !data){
+    mostrarError('No encontramos ningún pedido con ese número. Revísalo e intenta de nuevo.');
+    return false;
+  }
+
+  // Verificación ligera de privacidad: los últimos 4 dígitos del teléfono deben coincidir
+  const telDigits = (data.cliente_telefono || '').replace(/\D/g,'');
+  if(telDigits.slice(-4) !== tel4){
+    mostrarError('El número de pedido y el teléfono no coinciden. Revisa tus datos.');
+    return false;
+  }
+
+  pintarPedido(data);
+  return true;
+}
+
+function pintarPedido(p){
+  const est = ESTADOS[p.estado] || ESTADOS.nuevo;
+  const nombre = (p.cliente_nombre || '').split(' ')[0] || 'Hola';
+
+  document.getElementById('r-greet').textContent = `Hola, ${nombre} 👋`;
+  document.getElementById('r-num').textContent = `PEDIDO #${p.id}`;
+  document.getElementById('r-emoji').textContent = est.emoji;
+  document.getElementById('r-title').textContent = est.titulo;
+  document.getElementById('r-sub').textContent = est.sub;
+
+  // Pintar el stepper según el estado actual
+  ORDEN.forEach((nombreEstado, idx)=>{
+    const el = document.getElementById('step-'+nombreEstado);
+    el.classList.remove('active','done');
+    if(idx < est.i) el.classList.add('done');
+    else if(idx === est.i) el.classList.add('active');
+  });
+
+  // Fecha del pedido (con respaldo por si created_at viniera nulo)
+  const f = document.getElementById('r-fecha');
+  if(p.created_at){
+    const d = new Date(p.created_at);
+    f.textContent = d.toLocaleString('es-MX', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+  } else {
+    f.textContent = '';
+  }
+
+  // Lista de productos
+  const cont = document.getElementById('r-productos');
+  cont.innerHTML = '';
+  (p.productos || []).forEach(it=>{
+    const sub = (it.precio_unitario || 0) * (it.cantidad || 0);
+    const row = document.createElement('div');
+    row.className = 'linea';
+    row.innerHTML = `<span class="linea-nombre"><b>${it.cantidad}×</b> ${it.nombre}</span><span class="linea-precio">$${sub.toFixed(2)}</span>`;
+    cont.appendChild(row);
+  });
+
+  document.getElementById('r-total').textContent = `$${Number(p.total||0).toFixed(2)}`;
+
+  // Botón de WhatsApp a la tienda (solo si configuraste el número arriba)
+  const wa = document.getElementById('r-wa');
+  if(WHATSAPP_TIENDA){
+    const msg = encodeURIComponent(`Hola, quiero preguntar por mi pedido #${p.id} de La Canasta.`);
+    wa.href = `https://wa.me/${WHATSAPP_TIENDA}?text=${msg}`;
+    wa.style.display = 'block';
+  }
+
+  // Si ya se entregó, dejamos de refrescar
+  if(p.estado === 'entregado'){
+    detenerAutoRefresh();
+    document.getElementById('r-live').innerHTML = '🎉 Pedido completado';
+  }
+}
+
+function iniciarAutoRefresh(){
+  detenerAutoRefresh();
+  timer = setInterval(async ()=>{
+    if(pedidoActivo) await cargarPedido(pedidoActivo.id, pedidoActivo.tel4);
+  }, 15000);
+}
+function detenerAutoRefresh(){ if(timer){ clearInterval(timer); timer = null; } }
+
+function reiniciar(){
+  detenerAutoRefresh();
+  pedidoActivo = null;
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('lookup').style.display = 'block';
+  document.getElementById('inp-tel').value = '';
+  document.getElementById('r-live').innerHTML = '<span class="live-dot"></span> Se actualiza solo cada 15 segundos';
+  limpiarError();
+}
+</script>
+</body>
+</html>
