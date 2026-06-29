@@ -219,6 +219,13 @@ nav{
   opacity:0;transform:translateY(6px);transition:all .2s;
 }
 .pc-add-btn:hover{background:var(--verde2);}
+.pc-agotado-banner{
+  position:absolute;bottom:0;left:0;right:0;z-index:2;
+  background:rgba(26,26,22,.72);color:#fff;font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;text-align:center;padding:7px 0;
+}
+.prod-card.agotado .pc-img img{filter:grayscale(60%);opacity:.7;}
+.prod-card.agotado{pointer-events:none;opacity:.85;}
 .pc-body{padding:12px 14px 14px;}
 .pc-cat{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--verde);margin-bottom:3px;}
 .pc-name{font-family:var(--fd);font-size:15px;font-weight:700;color:var(--negro);margin-bottom:2px;line-height:1.2;}
@@ -656,7 +663,12 @@ footer{background:var(--negro2);padding:56px 40px 0;}
     <div class="modal-body" id="track-body" style="text-align:center;padding:30px 22px">
       <div style="font-size:48px;margin-bottom:12px">🎉</div>
       <div style="font-family:var(--fd);font-size:22px;font-weight:800;margin-bottom:6px" id="track-num"></div>
-      <div style="font-size:13px;color:var(--gris);margin-bottom:24px">Guarda este número para dar seguimiento a tu pedido</div>
+      <div style="font-size:13px;color:var(--gris);margin-bottom:8px">Guarda este número para dar seguimiento a tu pedido</div>
+      <!-- Botón para que el cliente se mande su número de pedido por WhatsApp -->
+      <a id="track-wa-guardar" href="#" target="_blank" rel="noopener"
+        style="display:inline-block;background:#25d366;color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:8px 18px;border-radius:20px;margin-bottom:20px">
+        💬 Guardar número en WhatsApp
+      </a>
       <div class="track-steps">
         <div class="track-step active" id="step-nuevo"><div class="ts-dot"></div><div class="ts-label">Pendiente</div></div>
         <div class="track-step" id="step-preparando"><div class="ts-dot"></div><div class="ts-label">Preparando</div></div>
@@ -732,12 +744,17 @@ function renderProds(){
   nr.style.display='none';
   list.forEach(p=>{
     const oldp=p.oldPrice?`<span class="pc-price-old">$${p.oldPrice}</span>`:'';
-    const div=document.createElement('div');div.className='prod-card';
+    const agotado = p.stock <= 0;
+    const div=document.createElement('div');
+    div.className='prod-card' + (agotado ? ' agotado' : '');
     div.innerHTML=`
       <div class="pc-img">
         ${getBadgeHTML(p.badge)}
         <img src="${p.img}" alt="${p.name}" loading="lazy">
-        <button class="pc-add-btn" onclick="addToCart(${p.id});event.stopPropagation()">+</button>
+        ${agotado
+          ? `<div class="pc-agotado-banner">Agotado</div>`
+          : `<button class="pc-add-btn" onclick="addToCart(${p.id});event.stopPropagation()">+</button>`
+        }
       </div>
       <div class="pc-body">
         <div class="pc-cat">${p.cat}</div>
@@ -914,12 +931,15 @@ async function confirmarPedido(){
     return;
   }
 
-  // Pedido guardado con éxito -> ahora restamos el stock de cada producto
+  // Descontamos el stock usando la función atómica de Supabase
+  // Esto evita que dos pedidos simultáneos descuenten más de lo que hay
   for(const k of keys){
     const {product:p, qty} = cart[k];
-    const { data: actual } = await sb.from('productos').select('stock').eq('id', p.id).single();
-    const nuevoStock = Math.max(0, (actual?.stock || 0) - qty);
-    await sb.from('productos').update({ stock: nuevoStock }).eq('id', p.id);
+    const { data: ok } = await sb.rpc('descontar_stock', { pid: p.id, cantidad: qty });
+    if(!ok){
+      // Si la función devuelve false, el stock se agotó justo entre que el cliente hizo clic y llegó el pedido
+      showToast(`⚠️ "${p.nombre}" se agotó justo ahora. Tu pedido fue registrado — la tienda te contactará.`);
+    }
   }
 
   cart = {};
@@ -936,7 +956,13 @@ async function confirmarPedido(){
 function mostrarTracking(idPedido){
   document.getElementById('track-num').textContent = `Pedido #${idPedido}`;
   localStorage.setItem('ultimoPedidoId', idPedido);
-  // Mensaje de contacto por WhatsApp (solo aparece si configuraste WHATSAPP_TIENDA arriba)
+
+  // Botón "Guardar número en WhatsApp" — el cliente se manda el número a sí mismo
+  // Abre WhatsApp con un mensaje prellenado; el cliente solo elige a quién mandarlo (puede ser a sí mismo)
+  const msgCliente = encodeURIComponent(`Mi número de pedido en La Canasta es el #${idPedido}. Lo puedo consultar en: ${location.origin}/seguimiento.html`);
+  document.getElementById('track-wa-guardar').href = `https://wa.me/?text=${msgCliente}`;
+
+  // Mensaje de contacto por WhatsApp con la tienda
   if(WHATSAPP_TIENDA){
     const msg = encodeURIComponent(`Hola, tengo una duda sobre mi pedido #${idPedido} de La Canasta.`);
     document.getElementById('track-wa-link').href = `https://wa.me/${WHATSAPP_TIENDA}?text=${msg}`;
