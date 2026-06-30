@@ -162,6 +162,24 @@ nav{
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--negro);color:#fff;border-radius:24px;padding:12px 22px;font-size:13px;font-weight:500;z-index:400;transition:transform .35s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.2);}
 .toast.show{transform:translateX(-50%) translateY(0);}
 
+/* HISTORIAL */
+.dia-bloque{background:var(--blanco);border-radius:14px;margin-bottom:16px;overflow:hidden;box-shadow:0 2px 12px rgba(26,26,22,.06);}
+.dia-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;border-bottom:1px solid var(--fondo2);user-select:none;}
+.dia-fecha{font-family:var(--fd);font-size:15px;font-weight:700;}
+.dia-resumen{display:flex;gap:14px;align-items:center;}
+.dia-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;background:var(--fondo2);color:var(--gris);}
+.dia-total{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--verde);}
+.dia-toggle{font-size:18px;color:var(--gris);transition:transform .2s;}
+.dia-body{display:none;padding:12px 18px 18px;}
+.dia-body.open{display:block;}
+.dia-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--fondo2);font-size:13px;gap:10px;}
+.dia-row:last-child{border-bottom:none;}
+.dia-row-num{font-weight:700;color:var(--negro2);min-width:60px;}
+.dia-row-cliente{color:var(--gris);flex:1;}
+.dia-row-estado{font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;}
+.dia-row-total{font-weight:700;color:var(--verde);white-space:nowrap;}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 @media(min-width:640px){
   .nav-sub{display:block;}
 }
@@ -185,7 +203,8 @@ nav{
   <div class="nav-tabs" id="nav-tabs" style="display:none">
     <button class="nav-tab active" onclick="cambiarSeccion('pedidos',this)">📦 Pedidos</button>
     <button class="nav-tab" onclick="cambiarSeccion('productos',this)">🛒 Productos</button>
-    <button class="nav-tab" onclick="cambiarSeccion('config',this)">⚙️ Config</button>
+    <button class="nav-tab" onclick="cambiarSeccion('historial',this);cargarHistorial()">📅 Historial</button>
+    <button class="nav-tab" onclick="cambiarSeccion('config',this);cargarConfig()">⚙️ Config</button>
   </div>
   <button class="refresh-btn" onclick="cargarPedidos()" id="refresh-btn" style="display:none">🔄 Actualizar</button>
 </nav>
@@ -289,21 +308,24 @@ nav{
   </div>
 </div>
 
+<!-- SECCIÓN HISTORIAL -->
+<div class="section" id="sec-historial">
+  <div class="dash-title" style="margin-bottom:6px">Historial de pedidos</div>
+  <div class="dash-sub" style="margin-bottom:20px">Pedidos agrupados por día</div>
+  <div id="historial-cargando" style="text-align:center;padding:40px;color:var(--gris);font-size:14px">Cargando historial...</div>
+  <div id="historial-lista"></div>
+</div>
+
 <!-- SECCIÓN CONFIGURACIÓN -->
 <div class="section" id="sec-config">
   <div class="dash-title" style="margin-bottom:20px">Configuración</div>
   <div class="sg"><div class="sg-title">Tienda</div>
-    <div class="sr"><label>Nombre</label><input type="text" value="La Canasta"></div>
-    <div class="sr"><label>Dirección</label><input type="text" value="Calle Principal 123"></div>
-    <div class="sr"><label>Teléfono</label><input type="text" value="+52 33 1234 5678"></div>
+    <div class="sr"><label>Nombre de la tienda</label><input type="text" id="cfg-nombre" placeholder="La Canasta"></div>
+    <div class="sr"><label>Dirección</label><input type="text" id="cfg-direccion" placeholder="Calle Principal 123"></div>
+    <div class="sr"><label>Teléfono / WhatsApp</label><input type="text" id="cfg-telefono" placeholder="+52 33 1234 5678"></div>
   </div>
   <div class="sg"><div class="sg-title">Horarios</div>
-    <div class="sr"><label>Lun–Sáb</label><input type="text" value="7:00 – 21:00"></div>
-    <div class="sr"><label>Domingo</label><input type="text" value="8:00 – 15:00"></div>
-  </div>
-  <div class="sg"><div class="sg-title">Funciones</div>
-    <div class="sr"><label>Carrito activo</label><label class="toggle"><input type="checkbox" checked><span class="tsl"></span></label></div>
-    <div class="sr"><label>Envío a domicilio</label><label class="toggle"><input type="checkbox" checked><span class="tsl"></span></label></div>
+    <div class="sr"><label>Horario</label><input type="text" id="cfg-horario" placeholder="Lun–Sáb 7:00–21:00 · Dom 8:00–15:00"></div>
   </div>
   <div class="sg"><div class="sg-title">Contraseña de acceso</div>
     <div class="af"><label>Contraseña actual</label><input type="password" id="p-cur" placeholder="••••••"></div>
@@ -312,6 +334,8 @@ nav{
     <div class="pw-err" id="p-err"></div>
     <button class="ab" onclick="changePw()">Actualizar contraseña</button>
   </div>
+  <button class="ab" style="margin-top:8px" onclick="guardarConfig()">💾 Guardar configuración</button>
+  <div class="pw-err" id="cfg-msg" style="display:none;background:var(--verde-pale);color:var(--verde);border-color:var(--verde)"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -342,6 +366,12 @@ function checkPw(){
   }
 }
 
+// Al cargar la página, obtenemos la contraseña real desde Supabase
+(async ()=>{
+  const { data } = await sb.from('configuracion').select('valor').eq('clave','password').single();
+  if(data?.valor) PANEL_PW = data.valor;
+})();
+
 function cambiarSeccion(nombre, btn){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
@@ -366,6 +396,7 @@ async function cargarPedidos(){
   btn.textContent = '🔄 Actualizar';
   if(error){ console.error(error); document.getElementById('dash-sub').textContent = 'Error al cargar pedidos'; return; }
   pedidos = data || [];
+  verificarPedidosNuevos(pedidos);
   renderDash();
 }
 
@@ -572,16 +603,154 @@ async function delProd(){
   showToast('Producto eliminado');aTab('list',document.querySelectorAll('.a-tab')[1]);
 }
 
-/* ── CONFIGURACIÓN ── */
-function changePw(){
-  const cur=document.getElementById('p-cur').value,nw=document.getElementById('p-new').value,con=document.getElementById('p-con').value,err=document.getElementById('p-err');
-  if(cur!==PANEL_PW){err.textContent='Contraseña actual incorrecta';err.style.display='block';return;}
-  if(nw.length<4){err.textContent='Mínimo 4 caracteres';err.style.display='block';return;}
-  if(nw!==con){err.textContent='Las contraseñas no coinciden';err.style.display='block';return;}
-  PANEL_PW=nw;err.style.display='none';['p-cur','p-new','p-con'].forEach(id=>document.getElementById(id).value='');showToast('✅ Contraseña actualizada (solo para esta sesión)');
+/* ── CONFIGURACIÓN (conectada a Supabase) ── */
+async function cargarConfig(){
+  const { data } = await sb.from('configuracion').select('clave,valor');
+  if(!data) return;
+  const cfg = Object.fromEntries(data.map(r=>[r.clave, r.valor]));
+  document.getElementById('cfg-nombre').value    = cfg.nombre_tienda || '';
+  document.getElementById('cfg-direccion').value = cfg.direccion     || '';
+  document.getElementById('cfg-telefono').value  = cfg.telefono      || '';
+  document.getElementById('cfg-horario').value   = cfg.horario       || '';
+  // Cargamos la contraseña real desde Supabase
+  if(cfg.password) PANEL_PW = cfg.password;
 }
 
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+async function guardarConfig(){
+  const campos = [
+    { clave:'nombre_tienda', valor: document.getElementById('cfg-nombre').value.trim() },
+    { clave:'direccion',     valor: document.getElementById('cfg-direccion').value.trim() },
+    { clave:'telefono',      valor: document.getElementById('cfg-telefono').value.trim() },
+    { clave:'horario',       valor: document.getElementById('cfg-horario').value.trim() },
+  ];
+  let ok = true;
+  for(const c of campos){
+    const { error } = await sb.from('configuracion').update({ valor: c.valor }).eq('clave', c.clave);
+    if(error){ ok = false; console.error(error); }
+  }
+  const msg = document.getElementById('cfg-msg');
+  msg.style.display = 'block';
+  if(ok){
+    msg.textContent = '✅ Configuración guardada correctamente';
+    msg.style.background = 'var(--verde-pale)'; msg.style.color = 'var(--verde)'; msg.style.borderColor = 'var(--verde)';
+  } else {
+    msg.textContent = '⚠️ Hubo un error al guardar, intenta de nuevo';
+    msg.style.background = '#fdecea'; msg.style.color = 'var(--rojo)'; msg.style.borderColor = '#f5c6bf';
+  }
+  setTimeout(()=>{ msg.style.display = 'none'; }, 3000);
+}
+
+async function changePw(){
+  const cur=document.getElementById('p-cur').value, nw=document.getElementById('p-new').value, con=document.getElementById('p-con').value, err=document.getElementById('p-err');
+  if(cur!==PANEL_PW){ err.textContent='Contraseña actual incorrecta'; err.style.display='block'; return; }
+  if(nw.length<4){ err.textContent='Mínimo 4 caracteres'; err.style.display='block'; return; }
+  if(nw!==con){ err.textContent='Las contraseñas no coinciden'; err.style.display='block'; return; }
+  // Guardar en Supabase para que persista
+  const { error } = await sb.from('configuracion').update({ valor: nw }).eq('clave', 'password');
+  if(error){ err.textContent='Error al guardar la contraseña'; err.style.display='block'; return; }
+  PANEL_PW = nw;
+  err.style.display='none';
+  ['p-cur','p-new','p-con'].forEach(id=>document.getElementById(id).value='');
+  showToast('✅ Contraseña actualizada y guardada');
+}
+
+/* ── HISTORIAL (pedidos agrupados por día) ── */
+async function cargarHistorial(){
+  document.getElementById('historial-cargando').style.display = 'block';
+  document.getElementById('historial-lista').innerHTML = '';
+
+  const { data, error } = await sb.from('pedidos').select('id,cliente_nombre,total,estado,created_at').order('id', { ascending: false });
+  document.getElementById('historial-cargando').style.display = 'none';
+  if(error || !data){ document.getElementById('historial-lista').innerHTML = '<p style="color:var(--gris);text-align:center;padding:30px">Error al cargar historial</p>'; return; }
+
+  // Agrupar por día
+  const grupos = {};
+  data.forEach(p => {
+    const fecha = p.created_at ? new Date(p.created_at).toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : 'Sin fecha';
+    const clave = p.created_at ? p.created_at.slice(0,10) : 'sin-fecha';
+    if(!grupos[clave]) grupos[clave] = { fecha, pedidos:[], total:0 };
+    grupos[clave].pedidos.push(p);
+    if(p.estado !== 'cancelado') grupos[clave].total += Number(p.total || 0);
+  });
+
+  const lista = document.getElementById('historial-lista');
+  if(!Object.keys(grupos).length){ lista.innerHTML = '<p style="color:var(--gris);text-align:center;padding:30px">No hay pedidos registrados aún</p>'; return; }
+
+  Object.entries(grupos).forEach(([clave, g]) => {
+    const bloque = document.createElement('div');
+    bloque.className = 'dia-bloque';
+    const rows = g.pedidos.map(p => {
+      const badge = `badge-${p.estado}`;
+      const label = estadoConfig[p.estado]?.label || p.estado;
+      return `<div class="dia-row">
+        <span class="dia-row-num">#${p.id}</span>
+        <span class="dia-row-cliente">${p.cliente_nombre || '—'}</span>
+        <span class="dia-row-estado pc-badge ${badge}">${label}</span>
+        <span class="dia-row-total">$${Number(p.total||0).toFixed(2)}</span>
+      </div>`;
+    }).join('');
+
+    bloque.innerHTML = `
+      <div class="dia-header" onclick="toggleDia(this)">
+        <span class="dia-fecha">${g.fecha}</span>
+        <div class="dia-resumen">
+          <span class="dia-badge">${g.pedidos.length} pedido${g.pedidos.length!==1?'s':''}</span>
+          <span class="dia-total">$${g.total.toFixed(2)}</span>
+          <span class="dia-toggle">▾</span>
+        </div>
+      </div>
+      <div class="dia-body">${rows}</div>`;
+    lista.appendChild(bloque);
+  });
+
+  // Abrir el día más reciente por defecto
+  const primero = lista.querySelector('.dia-body');
+  if(primero){ primero.classList.add('open'); lista.querySelector('.dia-toggle').textContent = '▴'; }
+}
+
+function toggleDia(header){
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.dia-toggle');
+  const open = body.classList.toggle('open');
+  arrow.textContent = open ? '▴' : '▾';
+}
+
+/* ── ALERTA DE SONIDO (pedido nuevo) ── */
+let ultimoIdVisto = null;
+
+function sonarAlerta(){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Dos beeps cortos tipo "ding ding"
+    [0, 0.25].forEach(offset => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine'; osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.3);
+      osc.start(ctx.currentTime + offset);
+      osc.stop(ctx.currentTime + offset + 0.3);
+    });
+  } catch(e){ console.log('Audio no disponible:', e); }
+}
+
+function verificarPedidosNuevos(datosFrescos){
+  if(ultimoIdVisto === null){
+    // Primera carga, solo guardamos el máximo ID sin sonar
+    const maxId = datosFrescos.length ? Math.max(...datosFrescos.map(p=>p.id)) : 0;
+    ultimoIdVisto = maxId;
+    return;
+  }
+  const nuevos = datosFrescos.filter(p => p.id > ultimoIdVisto && p.estado === 'nuevo');
+  if(nuevos.length){
+    sonarAlerta();
+    showToast(`🛎️ ${nuevos.length} pedido${nuevos.length>1?'s':''} nuevo${nuevos.length>1?'s':''}!`);
+    ultimoIdVisto = Math.max(...datosFrescos.map(p=>p.id));
+  }
+}
+
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2800); }
 
 // Refresca automáticamente cada 30 segundos si la sección de pedidos está activa
 setInterval(()=>{
