@@ -392,7 +392,18 @@ const estadoConfig = {
 async function cargarPedidos(){
   const btn = document.getElementById('refresh-btn');
   btn.textContent = '⏳ Cargando...';
-  const { data, error } = await sb.from('pedidos').select('*').order('id', { ascending: false });
+
+  // Solo pedidos de hoy (desde medianoche local hasta ahorita)
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const manana = new Date(hoy); manana.setDate(manana.getDate()+1);
+
+  const { data, error } = await sb.from('pedidos')
+    .select('*')
+    .gte('created_at', hoy.toISOString())
+    .lt('created_at', manana.toISOString())
+    .order('id', { ascending: false });
+
   btn.textContent = '🔄 Actualizar';
   if(error){ console.error(error); document.getElementById('dash-sub').textContent = 'Error al cargar pedidos'; return; }
   pedidos = data || [];
