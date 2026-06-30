@@ -959,7 +959,7 @@ function mostrarTracking(idPedido){
 
   // Botón "Guardar número en WhatsApp" — el cliente se manda el número a sí mismo
   // Abre WhatsApp con un mensaje prellenado; el cliente solo elige a quién mandarlo (puede ser a sí mismo)
-  const msgCliente = encodeURIComponent(`Mi número de pedido en La Canasta es el #${idPedido}. Lo puedo consultar en: ${location.origin}/seguimiento.html`);
+  const msgCliente = encodeURIComponent(`Mi número de pedido en La Canasta es el #${idPedido}. Lo puedo consultar en: https://novasitedigital.github.io/Super-Moderno/seguimiento.html`);
   document.getElementById('track-wa-guardar').href = `https://wa.me/?text=${msgCliente}`;
 
   // Mensaje de contacto por WhatsApp con la tienda
