@@ -336,24 +336,19 @@ async function cancelarPedido(){
   const btn = document.querySelector('#r-cancelar-confirm .btn');
   btn.disabled = true; btn.textContent = 'Cancelando...';
 
-  // Verificamos que el pedido siga en "nuevo" antes de cancelar (por si el dueño lo avanzó justo ahora)
-  const { data, error } = await sb.from('pedidos').select('estado, productos').eq('id', pedidoActivo.id).single();
-  if(error || !data){ btn.disabled=false; btn.textContent='Sí, cancelar'; return; }
+  // RPC verifica el teléfono, que el pedido sea 'nuevo' y cancela — todo en el servidor
+  const { data: ok, error } = await sb.rpc('cancelar_pedido_cliente', {
+    p_id: pedidoActivo.id,
+    p_tel4: pedidoActivo.tel4
+  });
 
-  if(data.estado !== 'nuevo'){
+  btn.disabled = false; btn.textContent = 'Sí, cancelar';
+
+  if(error || !ok){
     document.getElementById('r-cancelar-confirm').style.display = 'none';
-    alert('Tu pedido ya está siendo preparado, ya no es posible cancelarlo. Escríbenos por WhatsApp si tienes algún problema.');
+    alert('No se pudo cancelar. Es posible que tu pedido ya esté siendo preparado. Escríbenos por WhatsApp si necesitas ayuda.');
     await cargarPedido(pedidoActivo.id, pedidoActivo.tel4);
     return;
-  }
-
-  // Cancelamos el pedido
-  await sb.from('pedidos').update({ estado: 'cancelado' }).eq('id', pedidoActivo.id);
-
-  // Regresamos el stock de cada producto
-  for(const it of (data.productos || [])){
-    const { data: prod } = await sb.from('productos').select('stock').eq('id', it.id).single();
-    if(prod) await sb.from('productos').update({ stock: prod.stock + it.cantidad }).eq('id', it.id);
   }
 
   detenerAutoRefresh();

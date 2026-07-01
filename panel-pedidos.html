@@ -509,7 +509,11 @@ async function avanzarEstado(id){
   if(!pedido) return;
   const cfg = estadoConfig[pedido.estado];
   if(!cfg.next) return;
-  const { error } = await sb.from('pedidos').update({estado: cfg.next}).eq('id', id);
+  const { error } = await sb.rpc('avanzar_estado_pedido', {
+    p_id: id,
+    p_estado: cfg.next,
+    p_hash: sessionHash
+  });
   if(error){ showToast('⚠️ No se pudo actualizar el pedido'); console.error(error); return; }
   await cargarPedidos();
 }
