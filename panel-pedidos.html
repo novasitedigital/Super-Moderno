@@ -74,7 +74,8 @@ nav{
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
 .stat-card{background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
 .stat-label{font-size:11px;color:var(--gris);margin-bottom:5px;}
-.stat-val{font-family:var(--fd);font-size:26px;font-weight:800;}
+.stat-val{font-family:var(--fd),'Arial',sans-serif;font-size:26px;font-weight:800;font-variant-emoji:text;-webkit-font-smoothing:antialiased;}
+.stat-val::after{content:'';}
 .stat-card.nuevo .stat-val{color:var(--rojo);}
 .stat-card.preparando .stat-val{color:var(--amarillo);}
 .stat-card.listo .stat-val{color:var(--verde);}
@@ -229,9 +230,9 @@ nav{
     </div>
   </div>
   <div class="stats-row">
-    <div class="stat-card nuevo"><div class="stat-label">Nuevos</div><div class="stat-val" id="count-nuevo">0</div></div>
-    <div class="stat-card preparando"><div class="stat-label">Preparando</div><div class="stat-val" id="count-preparando">0</div></div>
-    <div class="stat-card listo"><div class="stat-label">En camino</div><div class="stat-val" id="count-camino">0</div></div>
+    <div class="stat-card nuevo"><div class="stat-label">Nuevos</div><div class="stat-val" id="count-nuevo">-</div></div>
+    <div class="stat-card preparando"><div class="stat-label">Preparando</div><div class="stat-val" id="count-preparando">-</div></div>
+    <div class="stat-card listo"><div class="stat-label">En camino</div><div class="stat-val" id="count-camino">-</div></div>
     <div class="stat-card"><div class="stat-label">Total del día</div><div class="stat-val" id="count-total">$0</div></div>
   </div>
   <div class="filters">
@@ -441,9 +442,10 @@ async function cargarPedidos(){
 function renderDash(){
   const activos = pedidos.filter(p => p.estado !== 'entregado');
   document.getElementById('dash-sub').textContent = `${activos.length} pedidos activos · ${pedidos.length} en total hoy`;
-  document.getElementById('count-nuevo').textContent = pedidos.filter(p=>p.estado==='nuevo').length;
-  document.getElementById('count-preparando').textContent = pedidos.filter(p=>p.estado==='preparando').length;
-  document.getElementById('count-camino').textContent = pedidos.filter(p=>p.estado==='camino').length;
+  const n = x => x === 0 ? '—' : x;
+  document.getElementById('count-nuevo').textContent = n(pedidos.filter(p=>p.estado==='nuevo').length);
+  document.getElementById('count-preparando').textContent = n(pedidos.filter(p=>p.estado==='preparando').length);
+  document.getElementById('count-camino').textContent = n(pedidos.filter(p=>p.estado==='camino').length);
   const totalDia = pedidos.reduce((s,p)=>s+(p.total||0),0);
   document.getElementById('count-total').textContent = '$'+totalDia.toLocaleString();
   renderLista();
