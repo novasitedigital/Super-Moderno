@@ -938,7 +938,7 @@ async function confirmarPedido(){
     const { data: ok } = await sb.rpc('descontar_stock', { pid: p.id, cantidad: qty });
     if(!ok){
       // Si la función devuelve false, el stock se agotó justo entre que el cliente hizo clic y llegó el pedido
-      showToast(`⚠️ "${p.nombre}" se agotó justo ahora. Tu pedido fue registrado — la tienda te contactará.`);
+      showToast(`⚠️ "${p.name}" se agotó justo ahora. Tu pedido fue registrado — la tienda te contactará.`);
     }
   }
 
